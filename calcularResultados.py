@@ -32,8 +32,10 @@ class Partido:
         
 class Torneo:
     def __init__(self, partidos: list[Partido]):
-        self.partidos = partidos
+        self.partidos = []
         self.equipos = [river, monterrey, inter, el_de_japon]
+        for partido in partidos:
+            self.agregar_partido(partido)
 
     def agregar_partido(self, partido: Partido):
         partido__existe = False
@@ -57,9 +59,10 @@ class Torneo:
         return None
     
     def mostrar_tabla_posiciones(self) -> None:
+        max_length_name = max(len(equipo.nombre) for equipo in self.equipos)
         tabla = "Tabla de Posiciones:\n"
         for equipo in self.equipos:
-            tabla += f"{equipo.nombre}: {equipo.puntos} puntos\n"
+            tabla += f"{equipo.nombre.ljust(max_length_name)} : {equipo.puntos} puntos\n"
         print(tabla)
     
 
