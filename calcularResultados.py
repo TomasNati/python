@@ -9,7 +9,7 @@ class Equipo:
 river = Equipo('River Plate')
 monterrey = Equipo('Monterrey') 
 inter = Equipo('Inter')
-el_de_japon = Equipo('El de Japón')
+urawa = Equipo('Urawa Red Diamonds')
 
 class Partido:
     def __init__(self,equipo1: Equipo, equipo2: Equipo, goles1: int, goles2: int):
@@ -33,7 +33,7 @@ class Partido:
 class Torneo:
     def __init__(self, partidos: list[Partido]):
         self.partidos = []
-        self.equipos = [river, monterrey, inter, el_de_japon]
+        self.equipos = [river, monterrey, inter, urawa]
         for partido in partidos:
             self.agregar_partido(partido)
 
@@ -59,6 +59,7 @@ class Torneo:
         return None
     
     def mostrar_tabla_posiciones(self) -> None:
+        self.equipos.sort(key=lambda equipo: equipo.puntos, reverse=True)
         max_length_name = max(len(equipo.nombre) for equipo in self.equipos)
         tabla = "Tabla de Posiciones:\n"
         for equipo in self.equipos:
@@ -69,10 +70,10 @@ class Torneo:
     
 
 partidos: list[Partido] =[
-    Partido(river, el_de_japon, 3, 1) # River Plate 3 vs El de Japón 1
-    , Partido(monterrey, inter, 1, 1) # Monterrey 1 vs Inter 1
-    , Partido(river, monterrey, 0, 0), # River Plate 0 vs Monterrey 0
-    Partido(inter, el_de_japon, 2, 1) # Inter 2 vs El de Japón 1
+    Partido(river, urawa, 3, 1) 
+    , Partido(monterrey, inter, 1, 1)
+    , Partido(river, monterrey, 0, 0), 
+    Partido(inter, urawa, 2, 1) 
 ]
 
 torneo = Torneo(partidos)
