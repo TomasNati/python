@@ -1,8 +1,6 @@
 import random
 import sys
 
-valid_choices = ['1', '2', '3', '4', '5', '6']
-
 def show_random_numbers():
     for _ in range(10):
         x = random.random()
@@ -107,6 +105,41 @@ def max_min_inputs():
     print(f"Max number: {max}")
     print(f"Min number: {min}")
 
+def backwards_string():
+    string = input("Enter any string:")
+    last_index = len(string)
+    index = 1
+    while index <= last_index:
+        print(string[-index])
+        if index < last_index:
+            print("\n")
+        index += 1
+
+def count_letter_in_string():
+    string = input("Enter a string: ")
+    letter = input("Enter a letter to count: ")
+    count = 0
+    for current_letter in string:
+        if current_letter == letter:
+            count += 1
+    print(f"The letter {letter} appear {count} times")
+
+def count_letter_with_count():
+    string = input("Enter a string: ")
+    letter = input("Enter a letter to count: ")
+    print(f"The letter {letter} appear {string.count(letter)} times")
+
+valid_choices = [
+    show_random_numbers, 
+    definitions, 
+    compute_payment, 
+    get_grade, 
+    sumar_inputs, 
+    max_min_inputs,
+    backwards_string,
+    count_letter_in_string,
+    count_letter_with_count
+]
         
 def get_choice():
     print("Functions: \n")
@@ -116,6 +149,9 @@ def get_choice():
     print("4. ----->: get_grade")
     print("5. ----->: sumar_inputs")
     print("6. ----->: max_min_inputs")
+    print("7. ----->: backwards_string")
+    print("8. ----->: count_letter_in_string")
+    print("9. ----->: count_letter_with_count")
     print("Other key: Exit")
     choice = input("Enter your choice: ")
 
@@ -123,24 +159,19 @@ def get_choice():
 
 def main():
     choice = get_choice()
-    
-    while choice in valid_choices:
-        if choice == '1':
-            show_random_numbers()
-        elif choice == '2':
-            definitions()
-        elif choice == '3':
-            compute_payment()
-        elif choice == '4':
-            get_grade()
-        elif choice == '5':
-            sumar_inputs()
-        elif choice == '6':
-            max_min_inputs()
+    try:
+        choice_int = int(choice)
 
-        print("\n")
-        print("-----------------------------------------")
-        choice = get_choice()
+        while choice_int >= 0 and choice_int <= len(valid_choices):
+            print(f"Executing function {choice_int}")
+            method = valid_choices[choice_int -1 ]
+            method()
+            print("\n")
+            print("-----------------------------------------")
+            choice_int = int(get_choice())    
+
+    except:
+        return
     
 main()
        
