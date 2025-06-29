@@ -1,6 +1,7 @@
 import random
+import sys
 
-valid_choices = ['1', '2', '3', '4']
+valid_choices = ['1', '2', '3', '4', '5', '6']
 
 def show_random_numbers():
     for _ in range(10):
@@ -65,6 +66,47 @@ def get_grade():
     s_score = input('Enter the score: ')
     compute_grade(s_score)
 
+def sumar_inputs():
+    numeros_ingresados = 0
+    suma = 0
+    input_str = ""
+    while input_str != "done":
+        input_str = input("Enter a number: ")
+        try:
+            input_int = int(input_str)
+            numeros_ingresados += 1
+            suma += input_int
+        except:
+            print("Invalid input")
+    
+    print(f"Total de numeros ingresados: {numeros_ingresados}")
+    print(f"Suma: {suma}")
+    print(f"Promedio: {round(suma/numeros_ingresados,2)}")
+
+def max_min_inputs():
+    numeros_ingresados = 0
+    suma = 0
+    max = 0
+    min = sys.maxsize
+    input_str = ""
+    while input_str != "done":
+        input_str = input("Enter a number: ")
+        try:
+            input_int = int(input_str)
+            numeros_ingresados += 1
+            suma += input_int
+            if input_int > max:
+                max = input_int
+            if input_int < min:
+                min = input_int
+        except:
+            print("Invalid input")
+    
+    print(f"Total de numeros ingresados: {numeros_ingresados}")
+    print(f"Suma: {suma}")
+    print(f"Max number: {max}")
+    print(f"Min number: {min}")
+
         
 def get_choice():
     print("Functions: \n")
@@ -72,6 +114,8 @@ def get_choice():
     print("2. ----->: definitions")
     print("3. ----->: compute_payment")
     print("4. ----->: get_grade")
+    print("5. ----->: sumar_inputs")
+    print("6. ----->: max_min_inputs")
     print("Other key: Exit")
     choice = input("Enter your choice: ")
 
@@ -89,6 +133,10 @@ def main():
             compute_payment()
         elif choice == '4':
             get_grade()
+        elif choice == '5':
+            sumar_inputs()
+        elif choice == '6':
+            max_min_inputs()
 
         print("\n")
         print("-----------------------------------------")
