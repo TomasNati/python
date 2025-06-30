@@ -129,6 +129,46 @@ def count_letter_with_count():
     letter = input("Enter a letter to count: ")
     print(f"The letter {letter} appear {string.count(letter)} times")
 
+def print_file_to_uppercase():
+    try:
+        file_name = input("Enter a file name: ")
+        fhand = open(file_name)
+        for line in fhand:
+            line = line.rstrip()
+            print(line.upper())
+
+    except:
+        print("File does not exists.")
+
+def calculate_file_confidence():
+    try:
+        file_name = input("Enter a file name: ")
+
+        if file_name.lower() == "na na boo boo":
+            print("NA NA BOO BOO TO YOU - You have been punk'd!")
+            return
+        
+        fhand = open(file_name)
+        number_of_values_addded = 0
+        sum_of_confidences = 0
+        confidence__start = "X-DSPAM-Confidence:"
+        for line in fhand:
+            if (line.startswith(confidence__start)):
+                try:
+                    separator = line.find(":")
+                    confidence = float(line[separator + 1:].strip())
+                    number_of_values_addded += 1
+                    sum_of_confidences += confidence
+                except:
+                    print("Invalid format for Spam confidence line")
+                    return
+        
+        print(f"Average confidence: {round(sum_of_confidences/number_of_values_addded, 3)}")
+
+    except:
+        print("File does not exists.")
+
+
 valid_choices = [
     show_random_numbers, 
     definitions, 
@@ -138,20 +178,24 @@ valid_choices = [
     max_min_inputs,
     backwards_string,
     count_letter_in_string,
-    count_letter_with_count
+    count_letter_with_count,
+    print_file_to_uppercase,
+    calculate_file_confidence
 ]
         
 def get_choice():
     print("Functions: \n")
-    print("1. ----->: show_random_numbers")
-    print("2. ----->: definitions")
-    print("3. ----->: compute_payment")
-    print("4. ----->: get_grade")
-    print("5. ----->: sumar_inputs")
-    print("6. ----->: max_min_inputs")
-    print("7. ----->: backwards_string")
-    print("8. ----->: count_letter_in_string")
-    print("9. ----->: count_letter_with_count")
+    print("1.  ----->: show_random_numbers")
+    print("2.  ----->: definitions")
+    print("3.  ----->: compute_payment")
+    print("4.  ----->: get_grade")
+    print("5.  ----->: sumar_inputs")
+    print("6.  ----->: max_min_inputs")
+    print("7.  ----->: backwards_string")
+    print("8.  ----->: count_letter_in_string")
+    print("9.  ----->: count_letter_with_count")
+    print("10. -----> print_file_to_uppercase")
+    print("11. -----> calculate_file_confidence")
     print("Other key: Exit")
     choice = input("Enter your choice: ")
 
@@ -163,7 +207,6 @@ def main():
         choice_int = int(choice)
 
         while choice_int >= 0 and choice_int <= len(valid_choices):
-            print(f"Executing function {choice_int}")
             method = valid_choices[choice_int -1 ]
             method()
             print("\n")
