@@ -168,7 +168,47 @@ def calculate_file_confidence():
     except:
         print("File does not exists.")
 
+def list_chop_and_middle():
+    def chop(list_to_chop: list):
+      if len(list_to_chop) == 1:
+        del list_to_chop[0]
+      elif len(list_to_chop) > 1:
+        last_index = len(list_to_chop) - 1
+        del list_to_chop[last_index]
+        del list_to_chop[0]
+    
+    def middle(original_list: list):
+      new_list = [] 
+      if len(original_list) > 1:
+        last_index = len(original_list) - 1
+        new_list = original_list[1:last_index]
+      return new_list
+    
+    list_sample = []
+    copy_list = list_sample[:]
+    middle_l = middle(list_sample)
+    chop(list_sample)
+    print(f"List: {copy_list} - Chop 0: {list_sample} - Middle 0: {middle_l}")
 
+    list_sample = [45]
+    copy_list = list_sample[:]
+    middle_l = middle(list_sample)
+    chop(list_sample)
+    print(f"List: {copy_list} - Chop 1: {list_sample} - Middle 1: {middle_l}")
+
+    list_sample = [9, 12, 465, 8]
+    copy_list = list_sample[:]
+    middle_l = middle(list_sample)
+    chop(list_sample)
+    print(f"List: {copy_list} - Chop 4: {list_sample} - Middle 4: {middle_l}")
+
+    list_sample = [1,2,3,4,5,6,7,8,9.0]
+    copy_list = list_sample[:]
+    middle_l = middle(list_sample)
+    chop(list_sample)
+    print(f"List: {copy_list} - Chop 4: {list_sample} - Middle 4: {middle_l}")
+    
+            
 valid_choices = [
     show_random_numbers, 
     definitions, 
@@ -180,7 +220,8 @@ valid_choices = [
     count_letter_in_string,
     count_letter_with_count,
     print_file_to_uppercase,
-    calculate_file_confidence
+    calculate_file_confidence,
+    list_chop_and_middle
 ]
         
 def get_choice():
@@ -196,6 +237,7 @@ def get_choice():
     print("9.  ----->: count_letter_with_count")
     print("10. -----> print_file_to_uppercase")
     print("11. -----> calculate_file_confidence")
+    print("12. -----> list_chop_and_middle")
     print("Other key: Exit")
     choice = input("Enter your choice: ")
 
@@ -218,4 +260,3 @@ def main():
     
 main()
        
-
