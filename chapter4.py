@@ -236,6 +236,24 @@ def find_and_sort_unique_words():
     except Exception as e:
         print("An error occurred:", e)
 
+def count_mbox_froms():
+    try:
+        file_name = input("Enter a file name: ")
+        fhandle = open(file_name)    
+        count = 0
+        for line in fhandle:
+            words = line.split()
+            if len(words) < 2 or words[0] != "From" : continue
+            sender = words[1]
+            count += 1
+            print(sender)
+
+        print(f"There were {count} lines in the file with From as the first word") 
+
+    except Exception as e:
+        print("An error occurred:", e)
+
+
 valid_choices = [
     show_random_numbers, 
     definitions, 
@@ -250,7 +268,8 @@ valid_choices = [
     calculate_file_confidence,
     list_chop_and_middle,
     print_from_lines,
-    find_and_sort_unique_words
+    find_and_sort_unique_words,
+    count_mbox_froms
 ]
         
 def get_choice():
@@ -269,6 +288,7 @@ def get_choice():
     print("12. -----> list_chop_and_middle")
     print("13. -----> print_from_lines")
     print("14. -----> find_and_sort_unique_words")
+    print("15. -----> count_mbox_froms")
     print("Other key: Exit")
     choice = input("Enter your choice: ")
 
