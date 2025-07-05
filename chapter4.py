@@ -219,6 +219,23 @@ def print_from_lines():
     except Exception as e:
         print("An error occurred:", e)
 
+def find_and_sort_unique_words():
+    try:
+        file_name = input("Enter a file name: ")
+        fhandle = open(file_name)    
+        unique_words = []
+        for line in fhandle:
+            words = line.split()
+            for word in words:
+                if not word in unique_words:
+                    unique_words.append(word)
+
+        unique_words.sort()
+        print(unique_words)
+
+    except Exception as e:
+        print("An error occurred:", e)
+
 valid_choices = [
     show_random_numbers, 
     definitions, 
@@ -232,7 +249,8 @@ valid_choices = [
     print_file_to_uppercase,
     calculate_file_confidence,
     list_chop_and_middle,
-    print_from_lines
+    print_from_lines,
+    find_and_sort_unique_words
 ]
         
 def get_choice():
@@ -250,6 +268,7 @@ def get_choice():
     print("11. -----> calculate_file_confidence")
     print("12. -----> list_chop_and_middle")
     print("13. -----> print_from_lines")
+    print("14. -----> find_and_sort_unique_words")
     print("Other key: Exit")
     choice = input("Enter your choice: ")
 
