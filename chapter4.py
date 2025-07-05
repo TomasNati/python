@@ -208,7 +208,17 @@ def list_chop_and_middle():
     chop(list_sample)
     print(f"List: {copy_list} - Chop 4: {list_sample} - Middle 4: {middle_l}")
     
-            
+def print_from_lines():
+    try:
+        file_name = input("Enter a file name: ")
+        fhandle = open(file_name)    
+        for line in fhandle:
+            words = line.split()
+            if len(words) < 3 or words[0] != "From" : continue
+            print(words[2])    
+    except Exception as e:
+        print("An error occurred:", e)
+
 valid_choices = [
     show_random_numbers, 
     definitions, 
@@ -221,7 +231,8 @@ valid_choices = [
     count_letter_with_count,
     print_file_to_uppercase,
     calculate_file_confidence,
-    list_chop_and_middle
+    list_chop_and_middle,
+    print_from_lines
 ]
         
 def get_choice():
@@ -238,6 +249,7 @@ def get_choice():
     print("10. -----> print_file_to_uppercase")
     print("11. -----> calculate_file_confidence")
     print("12. -----> list_chop_and_middle")
+    print("13. -----> print_from_lines")
     print("Other key: Exit")
     choice = input("Enter your choice: ")
 
@@ -255,7 +267,8 @@ def main():
             print("-----------------------------------------")
             choice_int = int(get_choice())    
 
-    except:
+    except Exception as e:
+        print("An error occurred:", e)
         return
     
 main()
