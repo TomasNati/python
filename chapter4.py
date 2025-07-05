@@ -268,6 +268,78 @@ def max_min_inputs_improved():
     print(f"Max number: {max(numeros)}")
     print(f"Min number: {min(numeros)}")
 
+def create_dict_from_words():
+    try:
+        file_name = input("Enter a file name: ")
+        fhandle = open(file_name)    
+        my_words = dict()
+        for line in fhandle:
+            words = line.split()
+            for word in words:
+                if not word in my_words:
+                    my_words[word] = 1
+
+        print(f"There were {len(my_words)} words in the file") 
+
+    except Exception as e:
+        print("An error occurred:", e)
+
+def count_days_of_emails():
+    try:
+        file_name = input("Enter a file name: ")
+        fhandle = open(file_name)    
+        days = dict()
+        for line in fhandle:
+            words = line.split()
+            if len(words) < 3 or words[0] != "From": continue
+            current_day = words[2]
+            days[current_day] = days.get(current_day, 0) + 1
+        print(days)
+    except Exception as e:
+        print("An error occurred:", e)
+
+def count_senders_of_emails():
+    try:
+        file_name = input("Enter a file name: ")
+        fhandle = open(file_name)
+        senders = dict()
+        for line in fhandle:
+            words = line.split()
+            if len(words) < 2 or words[0] != "From": continue
+            sender = words[1]
+            senders[sender] = senders.get(sender, 0) + 1
+        
+        print("Senders: ", senders)
+        print("\n")
+        max_sender = ""
+        max_sent = 0
+        for sender in senders:
+            if senders[sender] > max_sent:
+                max_sender = sender
+                max_sent = senders[sender]
+        print(f"{max_sender} has sent the most emails: {max_sent}")
+
+    except Exception as e:
+        print("An error has ocurred:", e)
+
+def count_domains_of_emails():
+    try:
+        file_name = input("Enter a file name: " )
+        fhandle = open(file_name)
+        domains = dict()
+        for line in fhandle:
+            words = line.split()
+            if len(words) < 2 or words[0] != "From": continue
+            sender = words[1]
+            parts = sender.split("@")
+            if len(parts) != 2: continue
+            domain = parts[1]
+            domains[domain] = domains.get(domain, 0) + 1
+        print(domains)
+
+    except Exception as e:
+        print("An error has occured: ", e)
+
 
 valid_choices = [
     show_random_numbers, 
@@ -285,27 +357,17 @@ valid_choices = [
     print_from_lines,
     find_and_sort_unique_words,
     count_mbox_froms,
-    max_min_inputs_improved
+    max_min_inputs_improved,
+    create_dict_from_words,
+    count_days_of_emails,
+    count_senders_of_emails,
+    count_domains_of_emails
 ]
         
 def get_choice():
     print("Functions: \n")
-    print("1.  ----->: show_random_numbers")
-    print("2.  ----->: definitions")
-    print("3.  ----->: compute_payment")
-    print("4.  ----->: get_grade")
-    print("5.  ----->: sumar_inputs")
-    print("6.  ----->: max_min_inputs")
-    print("7.  ----->: backwards_string")
-    print("8.  ----->: count_letter_in_string")
-    print("9.  ----->: count_letter_with_count")
-    print("10. -----> print_file_to_uppercase")
-    print("11. -----> calculate_file_confidence")
-    print("12. -----> list_chop_and_middle")
-    print("13. -----> print_from_lines")
-    print("14. -----> find_and_sort_unique_words")
-    print("15. -----> count_mbox_froms")
-    print("16. -----> max_min_inputs_improved")
+    for index, my_function in enumerate(valid_choices):
+        print(f"{index + 1}. ------->: {my_function.__name__}")
     print("Other key: Exit")
     choice = input("Enter your choice: ")
 
@@ -326,6 +388,7 @@ def main():
     except Exception as e:
         print("An error occurred:", e)
         return
-    
+
+
 main()
        
