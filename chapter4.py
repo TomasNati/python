@@ -253,6 +253,21 @@ def count_mbox_froms():
     except Exception as e:
         print("An error occurred:", e)
 
+def max_min_inputs_improved():
+    numeros = []
+    input_str = ""
+    while input_str != "done":
+        input_str = input("Enter a number: ")
+        try:
+            input_int = int(input_str)
+            numeros.append(input_int)
+        except:
+            print("Invalid input")
+    
+    print(f"Total de numeros ingresados: {len(numeros)}")
+    print(f"Max number: {max(numeros)}")
+    print(f"Min number: {min(numeros)}")
+
 
 valid_choices = [
     show_random_numbers, 
@@ -269,7 +284,8 @@ valid_choices = [
     list_chop_and_middle,
     print_from_lines,
     find_and_sort_unique_words,
-    count_mbox_froms
+    count_mbox_froms,
+    max_min_inputs_improved
 ]
         
 def get_choice():
@@ -289,6 +305,7 @@ def get_choice():
     print("13. -----> print_from_lines")
     print("14. -----> find_and_sort_unique_words")
     print("15. -----> count_mbox_froms")
+    print("16. -----> max_min_inputs_improved")
     print("Other key: Exit")
     choice = input("Enter your choice: ")
 
