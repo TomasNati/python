@@ -340,6 +340,83 @@ def count_domains_of_emails():
     except Exception as e:
         print("An error has occured: ", e)
 
+def count_senders_of_emails_with_tuple():
+    try:
+        file_name = input("Enter a file name: ")
+        fhandle = open(file_name)
+        senders = dict()
+        for line in fhandle:
+            words = line.split()
+            if len(words) < 2 or words[0] != "From": continue
+            sender = words[1]
+            senders[sender] = senders.get(sender, 0) + 1
+        
+        print("Senders: ", senders)
+        print("\n")
+       
+        senders_list = []
+        for sender_email, emails_sent in senders.items():
+            senders_list.append((emails_sent, sender_email))
+        
+        senders_list.sort(reverse=True)
+        emails_sent, sender_email = senders_list[0]
+        print(f"The sender with email {sender_email} sent the most emails: {emails_sent}")
+
+    except Exception as e:
+        print("An error has ocurred:", e)
+
+def count_hours_dist_in_emails():
+    try:
+        file_name = input("Enter a file name: ")
+        fhandle = open(file_name)
+        emails_per_hour = dict()
+        
+        for line in fhandle:
+            words = line.split()
+            if len(words) < 6 or words[0] != "From": continue
+            hour_string = words[5]
+            hour, _, _ = hour_string.split(":")
+            emails_per_hour[hour] = emails_per_hour.get(hour, 0) + 1 
+        
+        hours_dist = list()
+        for email_hour, emails in emails_per_hour.items():
+            hours_dist.append((email_hour, emails))
+        
+        hours_dist.sort()
+        for hour, emails in hours_dist:
+            print(f"{hour}: {emails}")
+
+
+    except Exception as e:
+        print("An error has ocurred: ", e)
+
+def count_letter_frequency():
+    a_ord = ord('a')
+    z_ord = ord('z')
+
+    try:
+        file_name = input("Enter a file name: ")
+        fhandle = open(file_name)
+
+        letters_frequency = dict()
+
+        for line in fhandle:
+            for letter in line:
+                letter_lower = letter.lower()
+                letter_ord = ord(letter_lower)
+                if a_ord <= letter_ord and letter_ord <= z_ord:
+                    letters_frequency[letter_lower] = letters_frequency.get(letter_lower, 0) + 1
+        
+        letters_dist = list()
+        for letter, count in letters_frequency.items():
+            letters_dist.append((count, letter))
+        
+        letters_dist.sort(reverse=True)
+        for count, letter in letters_dist:
+            print(f"{letter}: {count}")
+
+    except Exception as e:
+        print("An error has ocurred: ", e)
 
 valid_choices = [
     show_random_numbers, 
@@ -361,7 +438,10 @@ valid_choices = [
     create_dict_from_words,
     count_days_of_emails,
     count_senders_of_emails,
-    count_domains_of_emails
+    count_domains_of_emails,
+    count_senders_of_emails_with_tuple,
+    count_hours_dist_in_emails,
+    count_letter_frequency
 ]
         
 def get_choice():
