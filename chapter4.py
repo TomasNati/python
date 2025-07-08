@@ -1,5 +1,6 @@
 import random
 import sys
+import re
 
 def show_random_numbers():
     for _ in range(10):
@@ -418,6 +419,38 @@ def count_letter_frequency():
     except Exception as e:
         print("An error has ocurred: ", e)
 
+def count_expression_in_file():
+    try:
+        reg_ex = input("Enter a regular expression: ")
+        file_name = input("Enter a file name: ")
+        fhandle = open(file_name)
+        count = 0
+        for line in fhandle:
+            if re.search(reg_ex, line):
+                count += 1
+        print(f"{file_name} has {count} lines that match the expression {reg_ex}")
+
+    except Exception as e:
+        print("An error has occured: ", e)
+
+def find_average_of_revision():
+    try:
+        reg_ex = '^New Revision: ([0-9]+)$'
+        file_name = input("Enter a file name: ")
+        fhandle = open(file_name)
+        revisions = []
+        for line in fhandle:
+            matches =  re.findall(reg_ex, line)
+            if len(matches) == 1:
+                revisions.append(int(matches[0]))
+
+        average =round(sum(revisions)/len(revisions),2)
+        print(f"The average is: {average}")
+
+    except Exception as e:
+        print("An error has occured: ", e)
+
+
 valid_choices = [
     show_random_numbers, 
     definitions, 
@@ -441,7 +474,9 @@ valid_choices = [
     count_domains_of_emails,
     count_senders_of_emails_with_tuple,
     count_hours_dist_in_emails,
-    count_letter_frequency
+    count_letter_frequency,
+    count_expression_in_file,
+    find_average_of_revision
 ]
         
 def get_choice():
