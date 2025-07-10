@@ -452,18 +452,24 @@ def find_average_of_revision():
         print("An error has occured: ", e)
 
 def sockets_1():
-    mysock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    mysock.connect(('data.pr4e.org', 80))
-    cmd = 'GET http://data.pr4e.org/romeo.txt HTTP/1.0\r\n\r\n'.encode()
-    mysock.send(cmd)
+    try:
+        url_name = input('Enter URL: ')
+        url_parts = url_name.split('/')
+        domain = url_parts[2]
+        mysock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        mysock.connect((domain, 80))
+        cmd = f'GET {url_name} HTTP/1.0\r\n\r\n'.encode()
+        mysock.send(cmd)
 
-    while True:
-        data = mysock.recv(512)
-        if len(data) < 1:
-            break
-        print(data.decode(),end='')
-    
-    mysock.close()
+        while True:
+            data = mysock.recv(512)
+            if len(data) < 1:
+                break
+            print(data.decode(),end='')
+        
+        mysock.close()
+    except Exception as e:
+        print("There was an error with the socket: ", e)
 
 valid_choices = [
     show_random_numbers, 
