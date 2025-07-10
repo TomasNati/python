@@ -2,7 +2,9 @@ import random
 import sys
 import re
 import socket
-import urllib.request
+import urllib.request, urllib.parse, urllib.error 
+from bs4 import BeautifulSoup
+import ssl # defauts to certicate verification and most secure protocol (now TLS)
 
 def show_random_numbers():
     for _ in range(10):
@@ -497,6 +499,23 @@ def urllib_1():
     except Exception as e:
         print("There was an error: ", e)
 
+def beautiful_soup():
+    try:
+        # Ignore SSL/TLS certificate errors
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+
+        url = input('Enter a url - ')
+        html = urllib.request.urlopen(url, context=ctx).read()
+        soup = BeautifulSoup(html, 'html.parser')
+
+        # Retrieve all of the anchor tags
+        tags = soup('p')
+        print(f"There are {len(tags)} <p> elements in the page {url}")
+    except Exception as e:
+        print("There was an error: ", e)
+
 valid_choices = [
     show_random_numbers, 
     definitions, 
@@ -524,7 +543,8 @@ valid_choices = [
     count_expression_in_file,
     find_average_of_revision,
     sockets_1,
-    urllib_1
+    urllib_1,
+    beautiful_soup
 ]
         
 def get_choice():
