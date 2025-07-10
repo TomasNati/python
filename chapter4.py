@@ -2,6 +2,7 @@ import random
 import sys
 import re
 import socket
+import urllib.request
 
 def show_random_numbers():
     for _ in range(10):
@@ -481,6 +482,21 @@ def sockets_1():
     except Exception as e:
         print("There was an error with the socket: ", e)
 
+def urllib_1():
+    try:
+        url_name = input('Enter URL: ')
+        fhand = urllib.request.urlopen(url_name)
+        document_chars = 0
+        for line in fhand:
+            line_length = len(line)
+            if document_chars <= 3000:
+                print(line.decode().strip())
+            document_chars += line_length
+        print('\nTotal number of chars in the document: ', document_chars)
+
+    except Exception as e:
+        print("There was an error: ", e)
+
 valid_choices = [
     show_random_numbers, 
     definitions, 
@@ -507,7 +523,8 @@ valid_choices = [
     count_letter_frequency,
     count_expression_in_file,
     find_average_of_revision,
-    sockets_1
+    sockets_1,
+    urllib_1
 ]
         
 def get_choice():
