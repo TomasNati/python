@@ -1,6 +1,7 @@
 import random
 import sys
 import re
+import socket
 
 def show_random_numbers():
     for _ in range(10):
@@ -450,6 +451,19 @@ def find_average_of_revision():
     except Exception as e:
         print("An error has occured: ", e)
 
+def sockets_1():
+    mysock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    mysock.connect(('data.pr4e.org', 80))
+    cmd = 'GET http://data.pr4e.org/romeo.txt HTTP/1.0\r\n\r\n'.encode()
+    mysock.send(cmd)
+
+    while True:
+        data = mysock.recv(512)
+        if len(data) < 1:
+            break
+        print(data.decode(),end='')
+    
+    mysock.close()
 
 valid_choices = [
     show_random_numbers, 
@@ -476,7 +490,8 @@ valid_choices = [
     count_hours_dist_in_emails,
     count_letter_frequency,
     count_expression_in_file,
-    find_average_of_revision
+    find_average_of_revision,
+    sockets_1
 ]
         
 def get_choice():
