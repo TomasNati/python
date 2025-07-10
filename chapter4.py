@@ -451,6 +451,10 @@ def find_average_of_revision():
     except Exception as e:
         print("An error has occured: ", e)
 
+# url samples:
+#  http://data.pr4e.org/mbox.txt
+# http://data.pr4e.org/mbox-short.txt
+# http://data.pr4e.org/romeo.txt
 def sockets_1():
     try:
         url_name = input('Enter URL: ')
@@ -461,12 +465,18 @@ def sockets_1():
         cmd = f'GET {url_name} HTTP/1.0\r\n\r\n'.encode()
         mysock.send(cmd)
 
+        document_chars = 0
         while True:
             data = mysock.recv(512)
-            if len(data) < 1:
+            data_len = len(data)
+            if data_len < 1:
                 break
-            print(data.decode(),end='')
-        
+
+            if document_chars <= 3000:
+                print(data.decode(),end='')
+            document_chars += data_len
+            
+        print('\nTotal number of chars in the document: ', document_chars)
         mysock.close()
     except Exception as e:
         print("There was an error with the socket: ", e)
