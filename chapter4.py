@@ -458,6 +458,7 @@ def find_average_of_revision():
 #  http://data.pr4e.org/mbox.txt
 # http://data.pr4e.org/mbox-short.txt
 # http://data.pr4e.org/romeo.txt
+# https://www.bna.com.ar/Cotizador/DescargarPorFecha?RadioButton=on&filtroEuroDescarga=0&filtroDolarDescarga=1&fechaDesde=21%2F04%2F2025&fechaHasta=23%2F06%2F2025&id=billetes&descargar=
 def sockets_1():
     try:
         empty_line = '\r\n\r\n'
