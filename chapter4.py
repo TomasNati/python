@@ -460,26 +460,41 @@ def find_average_of_revision():
 # http://data.pr4e.org/romeo.txt
 def sockets_1():
     try:
+        empty_line = '\r\n\r\n'
         url_name = input('Enter URL: ')
         url_parts = url_name.split('/')
         domain = url_parts[2]
         mysock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         mysock.connect((domain, 80))
-        cmd = f'GET {url_name} HTTP/1.0\r\n\r\n'.encode()
+        cmd = f'GET {url_name} HTTP/1.0{empty_line}'.encode()
         mysock.send(cmd)
 
         document_chars = 0
+        document_decoded_partial = ""
+        new_line_found = False
         while True:
             data = mysock.recv(512)
             data_len = len(data)
             if data_len < 1:
                 break
-
-            if document_chars <= 3000:
-                print(data.decode(),end='')
+            
+            if len(document_decoded_partial) <= 3000:
+                chuck_decoded = data.decode()
+                
+                if empty_line in chuck_decoded:
+                    new_line_found = True
+                    line_parts = chuck_decoded.split(empty_line)
+                    if len(line_parts) == 2:
+                        document_decoded_partial = line_parts[1]
+                else:
+                    if new_line_found:
+                        document_decoded_partial += chuck_decoded
+                        
             document_chars += data_len
             
         print('\nTotal number of chars in the document: ', document_chars)
+        print('\n\nPartial document decoded: ')
+        print(document_decoded_partial)
         mysock.close()
     except Exception as e:
         print("There was an error with the socket: ", e)
