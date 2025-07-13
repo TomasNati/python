@@ -1,6 +1,11 @@
 from __future__ import annotations
 import urllib.request, urllib.parse
 import datetime
+import logging
+import traceback
+
+logging.basicConfig(level=logging.ERROR)
+
 
 cotizacion_url = 'https://www.bna.com.ar/Cotizador/DescargarPorFecha?RadioButton=on&filtroEuroDescarga=0&filtroDolarDescarga=1&fechaDesde={desde}&fechaHasta={hasta}&id=billetes&descargar='
 
@@ -23,8 +28,15 @@ class FechaCotizacion:
     def es_mayor(self, other_fecha: FechaCotizacion):
         return self.fecha > other_fecha.fecha
     
-    def mayor_igual_a_fecha_original(self, other_fecha: FechaCotizacion):
-        return self.fecha_original <= other_fecha.fecha
+    def menor_a_fecha_original(self, other_fecha: FechaCotizacion):
+        return self.fecha_original > other_fecha.fecha
+
+    def igual_a_fecha_original(self, other_fecha: FechaCotizacion):
+        return self.fecha_original == other_fecha.fecha
+    
+    def mayor_a_fecha_original(self, other_fecha: FechaCotizacion):
+        return self.fecha_original < other_fecha.fecha
+
 
 def main():
     try:
@@ -53,11 +65,17 @@ def main():
 
             if (not fecha_desde_encontrada):
                 fecha_nueva = FechaCotizacion(fecha)
-                fecha_desde_encontrada = from_date.mayor_igual_a_fecha_original(fecha_nueva)
+                if from_date.menor_a_fecha_original(fecha_nueva):
+                    fechas_y_cotizaciones = [(fecha, int(venta.split(",")[0]))]
+                elif from_date.igual_a_fecha_original(fecha_nueva):
+                    fecha_desde_encontrada = True
+                    fechas_y_cotizaciones = [(fecha, int(venta.split(",")[0]))]
+                elif from_date.mayor_a_fecha_original(fecha_nueva):
+                    fecha_desde_encontrada = True
+                    fechas_y_cotizaciones.append((fecha, int(venta.split(",")[0])))
 
-            if not fecha_desde_encontrada: continue
-            
-            fechas_y_cotizaciones.append((fecha, int(venta.split(",")[0])))
+            else:
+                fechas_y_cotizaciones.append((fecha, int(venta.split(",")[0])))
 
         suma_ventas = 0
         for fecha, venta in fechas_y_cotizaciones:
@@ -68,7 +86,8 @@ def main():
         promedio = 0 if len(fechas_y_cotizaciones) == 0 else round(suma_ventas / len(fechas_y_cotizaciones), 2)
         print(f'El valor promedio de Venta en el período es: ${promedio}')
         
-    except Exception as e:
-        print("There was an error getting the value: ", e)
+    except Exception:
+        logging.error("Something went wrong:\n%s", traceback.format_exc())
+
 
 main()
