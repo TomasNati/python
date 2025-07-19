@@ -80,11 +80,19 @@ def main():
         suma_ventas = 0
         for fecha, venta in fechas_y_cotizaciones:
             suma_ventas += venta
-            print(f'{fecha} - ${venta}')
+            print(f'{fecha}  ${venta}')
 
         print('\n')
         promedio = 0 if len(fechas_y_cotizaciones) == 0 else round(suma_ventas / len(fechas_y_cotizaciones), 2)
         print(f'El valor promedio de Venta en el período es: ${promedio}')
+
+        print('\n')
+        # to copy in excel
+        for fecha, venta in fechas_y_cotizaciones:
+            print(f'{fecha}')
+        for fecha, venta in fechas_y_cotizaciones:
+            print(f'{venta}')
+
         
     except Exception:
         logging.error("Something went wrong:\n%s", traceback.format_exc())
