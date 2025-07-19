@@ -83,6 +83,8 @@ def main():
             print(f'{fecha}  ${venta}')
 
         print('\n')
+        print(f'Cantidad de fechas encontradas: {len(fechas_y_cotizaciones)}')
+        print(f'Suma de Ventas: ${suma_ventas}')
         promedio = 0 if len(fechas_y_cotizaciones) == 0 else round(suma_ventas / len(fechas_y_cotizaciones), 2)
         print(f'El valor promedio de Venta en el período es: ${promedio}')
 
