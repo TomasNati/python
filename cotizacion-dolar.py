@@ -47,6 +47,8 @@ def main():
         to_date_string = input("Enter To date dd/mm/aaaa:")
         to_date = FechaCotizacion(to_date_string)
 
+        show_data_in_columns: str = input("Show results for Spreasheets? Y/y for Yes, other key for No:")
+
         if from_date.es_mayor(to_date):
             raise Exception("From date should be lesser than To date")
 
@@ -88,13 +90,15 @@ def main():
         promedio = 0 if len(fechas_y_cotizaciones) == 0 else round(suma_ventas / len(fechas_y_cotizaciones), 2)
         print(f'El valor promedio de Venta en el período es: ${promedio}')
 
-        print('\n')
-        # to copy in excel
-        for fecha, venta in fechas_y_cotizaciones:
-            print(f'{fecha}')
-        for fecha, venta in fechas_y_cotizaciones:
-            print(f'{venta}')
+        if show_data_in_columns.lower() == 'y':
+            print('\n')
+            # to copy in excel
+            for fecha, venta in fechas_y_cotizaciones:
+                print(f'{fecha}')
+            for fecha, venta in fechas_y_cotizaciones:
+                print(f'{venta}')
 
+        input('Press any key to continue.')
         
     except Exception:
         logging.error("Something went wrong:\n%s", traceback.format_exc())
