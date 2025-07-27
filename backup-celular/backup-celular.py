@@ -67,7 +67,7 @@ def get_files_per_year(path: str) -> None:
     return files_per_year
 
 
-def copy_if_not_exists(file_info: tuple[str, str], dest_folder: str) -> None:
+def copy_if_not_exists(file_info: tuple[str, str], dest_folder: str) -> str:
     (filename, src_file) = file_info
 
     os.makedirs(dest_folder, exist_ok=True)
@@ -75,16 +75,28 @@ def copy_if_not_exists(file_info: tuple[str, str], dest_folder: str) -> None:
 
     if not os.path.exists(dest_file):
         shutil.copy2(src_file, dest_file)
-        print(f"Copied: {filename}")
+        return f"Copied: {filename}"
     else:
-        print(f"Skipped (already exists): {filename}")
+        return f"Skipped (already exists): {filename}"
 
 
-files_per_year = get_files_per_year(test_path)
+def backup_files():
+    log_file = 'log.txt'
+    files_per_year = get_files_per_year(test_path)
 
-for year in files_per_year:
-    files = files_per_year[year]
-    for file_info in files:
-        copy_if_not_exists(file_info, f'{config.celular.destination}\\{year}')
+    with open(log_file, 'w', encoding="utf-8") as file:
+        for year in files_per_year:
+            files = files_per_year[year]
+            file.write(f'\n--- YEAR {year} -------------------------------------------------------')
+            
+            for file_info in files:
+                log_res = copy_if_not_exists(file_info, f'{config.celular.destination}\\{year}')
+                try:
+                    file.write(f'\n{log_res}')
+                except Exception as e:
+                    print(f'An error ocurred when printing line: {log_res}', e)
+
+            file.write(f'\n-----------------------------------------------------------------------\n')
 
 
+backup_files()
