@@ -10,15 +10,19 @@ from config import WINDOWS_PATH, CONFIG
 import os
 import datetime
 import stat
+import shutil
 
 class Celular:
-    def __init__(self, init_names: list[str], init_paths: list[str]):
+    def __init__(self, init_names: list[str], init_paths: list[str], destination: str):
         self.names: list[str] = init_names
         self.paths: list[str] = init_paths
+        self.destination = destination
 
 class Config:
     def __init__(self):
-        self.celular = Celular(CONFIG['celular']['names'], CONFIG['celular']['paths'])
+        self.celular = Celular(CONFIG['celular']['names'], 
+                               CONFIG['celular']['paths'],
+                               CONFIG['celular']['destination'])
 
     def get_paths(self) -> list[str]:
         paths = []
@@ -37,7 +41,7 @@ test_path = 'C:\\Users\\Andres\\Backups\\Kindle\\documents'
 def is_hidden(attributes: int) -> bool:
     return bool(attributes & stat.FILE_ATTRIBUTE_HIDDEN)
 
-def get_dir_properties(path: str) -> None:
+def get_files_per_year(path: str) -> None:
     if not os.path.exists(path):
         print(f'Path does not exists: {path}')
         return
@@ -56,22 +60,31 @@ def get_dir_properties(path: str) -> None:
             created_year = created_date.year
             if not created_year in files_per_year:
                 files_per_year[created_year] = []
-            files_per_year[created_year].append(file_name)
+            files_per_year[created_year].append((file_name, f'{path}\\{file_name}'))
 
     files_per_year = dict(sorted(files_per_year.items(), reverse=True))
-
-    total_number_of_files = 0
-    for year in files_per_year:
-        files_amount = len(files_per_year[year])
-        if files_amount > 1:
-            print(f'There are {files_amount} files for year {year}')
-        else:
-            print(f'There is {files_amount} file for year {year}')
-        total_number_of_files += files_amount
-
-    print(f'\nTotal number of files: {total_number_of_files}')
+    
+    return files_per_year
 
 
-get_dir_properties(test_path)
+def copy_if_not_exists(file_info: tuple[str, str], dest_folder: str) -> None:
+    (filename, src_file) = file_info
+
+    os.makedirs(dest_folder, exist_ok=True)
+    dest_file = os.path.join(dest_folder, filename)
+
+    if not os.path.exists(dest_file):
+        shutil.copy2(src_file, dest_file)
+        print(f"Copied: {filename}")
+    else:
+        print(f"Skipped (already exists): {filename}")
+
+
+files_per_year = get_files_per_year(test_path)
+
+for year in files_per_year:
+    files = files_per_year[year]
+    for file_info in files:
+        copy_if_not_exists(file_info, f'{config.celular.destination}\\{year}')
 
 
