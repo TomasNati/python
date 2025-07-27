@@ -7,6 +7,8 @@
 #     b. Lo copio en la carpeta de 2\año del archivo. Si existe el archivo, saltear la copia.
 #     c. Informar cuantos archivos se copiaron por año
 from config import WINDOWS_PATH, CONFIG
+import os
+import datetime
 
 class Celular:
     def __init__(self, init_names: list[str], init_paths: list[str]):
@@ -28,8 +30,38 @@ class Config:
 
 config = Config()
 
-for path in config.get_paths():
-    print(path)
 
+test_path = 'C:\\Users\\Andres\\Backups\\Kindle\\documents'
+
+def get_dir_properties(path: str) -> None:
+    if not os.path.exists(path):
+        print(f'Path does not exists: {path}')
+        return
+    
+    files_per_year = dict()
+
+    for item in os.scandir(path):
+        if item.is_dir(): continue
+        if item.is_file:
+            attrs = item.stat().st_file_attributes
+            # if attrs & stat.FILE_ATTRIBUTE_HIDDEN:: continue
+            file_stats = item.stat()
+            file_name = item.name
+            created_date = datetime.datetime.fromtimestamp(file_stats.st_mtime)
+            created_year = created_date.year
+            if not created_year in files_per_year:
+                files_per_year[created_year] = []
+            files_per_year[created_year].append(file_name)
+
+    total_number_of_files = 0
+    for year in files_per_year.keys():
+        files_amount = len(files_per_year[year])
+        print(f'There are {files_amount} files for year {year}')
+        total_number_of_files += files_amount
+
+    print(f'\nTotal number of files: {total_number_of_files}')
+
+
+get_dir_properties(test_path)
 
 
