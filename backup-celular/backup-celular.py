@@ -9,6 +9,7 @@
 from config import WINDOWS_PATH, CONFIG
 import os
 import datetime
+import stat
 
 class Celular:
     def __init__(self, init_names: list[str], init_paths: list[str]):
@@ -33,6 +34,9 @@ config = Config()
 
 test_path = 'C:\\Users\\Andres\\Backups\\Kindle\\documents'
 
+def is_hidden(attributes: int) -> bool:
+    return bool(attributes & stat.FILE_ATTRIBUTE_HIDDEN)
+
 def get_dir_properties(path: str) -> None:
     if not os.path.exists(path):
         print(f'Path does not exists: {path}')
@@ -41,11 +45,12 @@ def get_dir_properties(path: str) -> None:
     files_per_year = dict()
 
     for item in os.scandir(path):
+        file_stats = item.stat()
+        
+        if is_hidden(file_stats.st_file_attributes): continue
         if item.is_dir(): continue
+
         if item.is_file:
-            attrs = item.stat().st_file_attributes
-            # if attrs & stat.FILE_ATTRIBUTE_HIDDEN:: continue
-            file_stats = item.stat()
             file_name = item.name
             created_date = datetime.datetime.fromtimestamp(file_stats.st_mtime)
             created_year = created_date.year
@@ -53,10 +58,15 @@ def get_dir_properties(path: str) -> None:
                 files_per_year[created_year] = []
             files_per_year[created_year].append(file_name)
 
+    files_per_year = dict(sorted(files_per_year.items(), reverse=True))
+
     total_number_of_files = 0
-    for year in files_per_year.keys():
+    for year in files_per_year:
         files_amount = len(files_per_year[year])
-        print(f'There are {files_amount} files for year {year}')
+        if files_amount > 1:
+            print(f'There are {files_amount} files for year {year}')
+        else:
+            print(f'There is {files_amount} file for year {year}')
         total_number_of_files += files_amount
 
     print(f'\nTotal number of files: {total_number_of_files}')
