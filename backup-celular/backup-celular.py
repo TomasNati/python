@@ -86,17 +86,25 @@ def backup_files():
 
     with open(log_file, 'w', encoding="utf-8") as file:
         for year in files_per_year:
+            copied = 0
+            skipped = 0
             files = files_per_year[year]
             file.write(f'\n--- YEAR {year} -------------------------------------------------------')
             
             for file_info in files:
                 log_res = copy_if_not_exists(file_info, f'{config.celular.destination}\\{year}')
+                
+                if log_res.lower().find('skipped') > -1: skipped += 1
+                else: copied +=1 
+
                 try:
                     file.write(f'\n{log_res}')
                 except Exception as e:
                     print(f'An error ocurred when printing line: {log_res}', e)
 
             file.write(f'\n-----------------------------------------------------------------------\n')
+
+            print(f'Year {year} - Copied: {copied} files - Skipped: {skipped} files')    
 
 
 backup_files()
