@@ -42,7 +42,7 @@ config = Config()
 def is_hidden(attributes: int) -> bool:
     return bool(attributes & stat.FILE_ATTRIBUTE_HIDDEN)
 
-def get_files_per_year(path: str) -> dict:
+def get_files_per_year(path: str, year_from: int | None) -> dict | None:
     if not os.path.exists(path):
         print(f'Path does not exists: {path}')
         return None
@@ -59,6 +59,9 @@ def get_files_per_year(path: str) -> dict:
             file_name = item.name
             created_date = datetime.datetime.fromtimestamp(file_stats.st_mtime)
             created_year = created_date.year
+
+            if (year_from != None and created_year < year_from): continue
+
             if not created_year in files_per_year:
                 files_per_year[created_year] = []
             files_per_year[created_year].append((file_name, f'{path}\\{file_name}'))
@@ -80,9 +83,11 @@ def copy_if_not_exists(file_info: tuple[str, str], dest_folder: str) -> str:
     else:
         return f"Skipped (already exists): {filename}"
 
+def safe_to_int(s: str) -> int | None:
+    return int(s) if s.isdigit() else None
 
-def backup_files(source_path:str, dest_folder: str, log_file: str) -> None:
-    files_per_year = get_files_per_year(source_path)
+def backup_files(source_path:str, dest_folder: str, log_file: str, year_from: int | None) -> None:
+    files_per_year = get_files_per_year(source_path, year_from)
 
     if files_per_year == None: return
 
@@ -117,10 +122,13 @@ def main():
         else:
             print('Invalid device')
             return
+        
+        copy_from_year = input('Copiar a partir del año (<Enter> ignora este filtro): ')
+        year_from = safe_to_int(copy_from_year)
 
         log_index = 1
         for source_path in device.get_paths():
-            backup_files(source_path, device.destination, f'log-file{log_index}.txt')
+            backup_files(source_path, device.destination, f'log-file{log_index}.txt', year_from)
             log_index +=1
 
 
