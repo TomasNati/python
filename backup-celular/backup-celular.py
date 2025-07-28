@@ -6,45 +6,46 @@
 #     a. Obtengo el año del archivo
 #     b. Lo copio en la carpeta de 2\año del archivo. Si existe el archivo, saltear la copia.
 #     c. Informar cuantos archivos se copiaron por año
-from config import WINDOWS_PATH, CONFIG
+from config import  CONFIG
 import os
 import datetime
 import stat
 import shutil
 
-class Celular:
+class Dispositivo:
     def __init__(self, init_names: list[str], init_paths: list[str], destination: str):
         self.names: list[str] = init_names
         self.paths: list[str] = init_paths
         self.destination = destination
 
-class Config:
-    def __init__(self):
-        self.celular = Celular(CONFIG['celular']['names'], 
-                               CONFIG['celular']['paths'],
-                               CONFIG['celular']['destination'])
-
     def get_paths(self) -> list[str]:
         paths = []
-        for name in self.celular.names:
-            for path in self.celular.paths:
-                full_path = f'{WINDOWS_PATH}{name}{path}'
+        for name in self.names:
+            for path in self.paths:
+                full_path = f'{name}{path}'
                 paths.append(full_path)
         
         return paths
 
+class Config:
+    def __init__(self):
+        self.celular = Dispositivo(CONFIG['celular']['names'], 
+                               CONFIG['celular']['paths'],
+                               CONFIG['celular']['destination'])
+        self.kindle = Dispositivo(CONFIG['kindle']['names'], 
+                               CONFIG['kindle']['paths'],
+                               CONFIG['kindle']['destination'])
+        
 config = Config()
 
-
-test_path = 'C:\\Users\\Andres\\Backups\\Kindle\\documents'
 
 def is_hidden(attributes: int) -> bool:
     return bool(attributes & stat.FILE_ATTRIBUTE_HIDDEN)
 
-def get_files_per_year(path: str) -> None:
+def get_files_per_year(path: str) -> dict:
     if not os.path.exists(path):
         print(f'Path does not exists: {path}')
-        return
+        return None
     
     files_per_year = dict()
 
@@ -80,11 +81,13 @@ def copy_if_not_exists(file_info: tuple[str, str], dest_folder: str) -> str:
         return f"Skipped (already exists): {filename}"
 
 
-def backup_files():
-    log_file = 'log.txt'
-    files_per_year = get_files_per_year(test_path)
+def backup_files(source_path:str, dest_folder: str, log_file: str) -> None:
+    files_per_year = get_files_per_year(source_path)
+
+    if files_per_year == None: return
 
     with open(log_file, 'w', encoding="utf-8") as file:
+        file.write(f'Writing files in folder: {source_path} to base destination: {dest_folder}\n')
         for year in files_per_year:
             copied = 0
             skipped = 0
@@ -92,7 +95,7 @@ def backup_files():
             file.write(f'\n--- YEAR {year} -------------------------------------------------------')
             
             for file_info in files:
-                log_res = copy_if_not_exists(file_info, f'{config.celular.destination}\\{year}')
+                log_res = copy_if_not_exists(file_info, f'{dest_folder}\\{year}')
                 
                 if log_res.lower().find('skipped') > -1: skipped += 1
                 else: copied +=1 
@@ -106,5 +109,22 @@ def backup_files():
 
             print(f'Year {year} - Copied: {copied} files - Skipped: {skipped} files')    
 
+def main():
+    try:
+        device = input('Dispositivo a copiar\n 1.Celular Andrés\n 2.Kindle\nIngrese el número: ')
+        if device == '1': device = config.celular
+        elif device =='2': device = config.kindle
+        else:
+            print('Invalid device')
+            return
 
-backup_files()
+        log_index = 1
+        for source_path in device.get_paths():
+            backup_files(source_path, device.destination, f'log-file{log_index}.txt')
+            log_index +=1
+
+
+    except Exception as e:
+        print('An error has occurred:', e)
+
+main()
