@@ -7,5 +7,6 @@ Para poder ejecutar adb.exe:
 
 . Para probar si adb.exe tiene acceso al celular, probar este comando: `android\platform-tools>adb.exe devices `. Debería listar lo siguiente:
 ```
-List of devices  attached                                                      RFCTA07R21H     device
+List of devices attached 
+RFCTA07R21H     device
 ```
