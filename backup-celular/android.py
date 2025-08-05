@@ -97,6 +97,40 @@ def get_menu_option(opciones_validas: list[str], logger: TextIOWrapper) -> str:
     finally:
         return opcion
 
+def list_files_with_dates():
+    """
+    List files in current directory with their modification dates.
+    
+    Command: ls -l --time-style=+"%Y-%m-%d" | grep -v '^d' | awk '{print $6, $7}'
+    
+    Pipeline breakdown:
+    1. ls -l --time-style=+"%Y-%m-%d"
+       - Lists directory contents in long format
+       - Formats dates as YYYY-MM-DD
+       
+    2. grep -v '^d'
+       - Filters out directories (lines starting with 'd')
+       - Only keeps regular files
+       
+    3. awk '{print $6, $7}'
+       - Extracts and prints field 6 (date) and field 7 (filename)
+       - Fields are space-separated
+    
+    Returns:
+        Prints to stdout: Each line contains "YYYY-MM-DD filename"
+        
+    Example output:
+        2025-08-05 script.sql
+        2025-08-04 config.txt
+        2025-08-03 readme.md
+        
+    Notes:
+        - No sorting applied (files appear in filesystem order)
+        - Only processes current directory (no subdirectories)
+        - Date format is ISO 8601 compatible (YYYY-MM-DD)
+    """
+    pass
+
 with open('log-android.txt', 'w', encoding="utf-8") as file:
 
     file.write('\n\n--- EXECUTION --------------------------------------------------------------')
