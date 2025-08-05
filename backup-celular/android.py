@@ -3,7 +3,7 @@ from subprocess import run, CompletedProcess
 import os
 
 android_path = "/sdcard/DCIM/Hablame/"  # Most common
-android_ip_port = '192.168.1.56:45925'
+android_ip = '192.168.1.56'
 
 class ADBInterface:
     def __init__(self, android_ip_port:str, logger: TextIOWrapper):
@@ -32,7 +32,8 @@ class ADBInterface:
         
         return result
 
-    def check_android_connected(self, result: CompletedProcess[str]) -> bool:
+    def __check_android_connected(self) -> bool:
+        result = self.__execute_adb_command(['devices'])
         lines = result.stdout.splitlines()
         if len(lines) != 3: 
             print(f'Error. Invalid number of lines: {len(lines)}')
@@ -49,38 +50,70 @@ class ADBInterface:
         
         return True
 
-    def connect(self, ip_port: str) -> CompletedProcess[str]:
-        return self.__execute_adb_command(['connect', ip_port])
+    def connect(self) -> CompletedProcess[str]:
+        port = input('Puerto: ')
+        if not port: return
+            
+        retries = 0
+        connected = False
+        while not connected and retries < 3:
+            retries += 1
+            self.__execute_adb_command(['connect', f'{android_ip}:{port}'])
+            connected = self.__check_android_connected()
 
+        if not connected:
+            print('Connection failed.')
+        
     def disconnect(self) -> CompletedProcess[str]:
         return self.__execute_adb_command(['disconnect'])
 
-    def devices(self) -> CompletedProcess[str]:
-        return self.__execute_adb_command(['devices'])
-    
     def log_files_in_folder(self, path: str) -> None:
-        args = ["shell", "ls", path]
+        # - find /sdcard/YourFolderName: Starts searching in the target folder.
+        # - -maxdepth 1: Limits the search to the top-level directory (no recursion).
+        # - -type f: Filters to include only regular files (excludes directories).
+        # - -exec ls -l {} \;: Runs ls -l on each file to show detailed info including modified date.
+        # 📌 Example Output:
+        # -rw-rw---- 1 user sdcard_rw  1024 Aug  4 22:30 file1.txt
+        # -rw-rw---- 1 user sdcard_rw  2048 Aug  3 18:15 file2.jpg
+
+        command = f"find {path} -maxdepth 1 -type f -exec ls -l {{}} \\;"
+        args = ["shell", command]
         self.__execute_adb_command(args=args)
 
+
+def get_menu_option(opciones_validas: list[str], logger: TextIOWrapper) -> str:
+    try:
+        opcion = ''
+        
+        while opcion not in opciones_validas:
+            print('\nOpciones:')
+            print('1: Conectarse')
+            print('2: Listar archivos')
+            print('q: Salir')
+            opcion = input("Opción:")
+    except Exception as e:
+        logger.write('Error:', e)
+        print('An error has ocurred.')
+    finally:
+        return opcion
 
 with open('log-android.txt', 'w', encoding="utf-8") as file:
 
     file.write('\n\n--- EXECUTION --------------------------------------------------------------')
+    opciones_validas = ['1', '2', 'q']
+    adb = ADBInterface(android_ip_port=android_ip, logger=file)
 
-    adb = ADBInterface(android_ip_port=android_ip_port, logger=file)
-
-    result = adb.devices()
-    connected = adb.check_android_connected(result=result)
-
-    if connected:
-        print('Connected:', connected)
-    else:
-        print('Connected:', connected)
-        adb.connect(android_ip_port)
-        result = adb.devices()
-        connected = adb.check_android_connected(result=result)
-        print('Connected:', connected)
-
-    adb.log_files_in_folder(path=android_path)
-    if connected: adb.disconnect()
+    opcion = '1'
+    while opcion in opciones_validas:
+        opcion = get_menu_option(opciones_validas=opciones_validas, logger=file)
+        if opcion == '1':
+            adb.connect()
+            print('Opción ejecutada exitosamente')
+        elif opcion == '2':
+            adb.log_files_in_folder(path=android_path)
+            print('Opción ejecutada exitosamente')
+        elif opcion == 'q':
+            adb.disconnect()
+            opcion = ''
+               
     file.write('\n----------------------------------------------------------------------------')
