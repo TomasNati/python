@@ -13,23 +13,28 @@ class ADBInterface:
         self.__adb_path = os.path.join(script_dir, "android/platform-tools/adb.exe")  # Windows
         self.android_ip_port = android_ip_port
 
-    def __execute_adb_command(self, args: list) -> CompletedProcess[str] | None:
+    def __execute_adb_command(self, args: list, capture_output: bool = True, text: bool = True) -> CompletedProcess[str] | None:
         if (len(args) == 0):
             self.logger.write('\nError: there are no arguments to execute adb.exe with')
             return None
         
         self.logger.write(f'\nExecuting ./adb {' '.join(args)}')
-        args.insert(0, self.__adb_path)
-        result: CompletedProcess[str] = run(args=args, capture_output=True, text=True)
-
-        self.logger.write("\nSTDOUT:\n")
-        self.logger.write(result.stdout)
-
-        if len(result.stderr) > 0: 
-            self.logger.write("STDERR (if any):")
-            self.logger.write(result.stderr)
-            self.logger.write('\n\n')
+        self.logger.flush()  # Flush immediately to see command execution
         
+        args.insert(0, self.__adb_path)
+        result: CompletedProcess[str] = run(args=args, capture_output=capture_output, text=text)
+
+        if text:
+            self.logger.write("\nSTDOUT:\n")
+            self.logger.write(result.stdout)
+
+            if len(result.stderr) > 0: 
+                self.logger.write("STDERR (if any):")
+                self.logger.write(result.stderr)
+                self.logger.write('\n\n')
+            
+            self.logger.flush()  # Flush after writing output
+            
         return result
 
     def __check_android_connected(self) -> bool:
@@ -49,6 +54,11 @@ class ADBInterface:
             return False
         
         return True
+    
+    def parear_con_dispositivo(self) -> None:
+        android_address = input('Ingrese ip:puerto del dispositivo:')
+        if not android_address: return
+        self.__execute_adb_command(['pair', android_address], capture_output=False, text=False)
 
     def connect(self) -> CompletedProcess[str]:
         port = input('Puerto: ')
@@ -68,17 +78,49 @@ class ADBInterface:
         return self.__execute_adb_command(['disconnect'])
 
     def log_files_in_folder(self, path: str) -> None:
-        # - find /sdcard/YourFolderName: Starts searching in the target folder.
-        # - -maxdepth 1: Limits the search to the top-level directory (no recursion).
-        # - -type f: Filters to include only regular files (excludes directories).
-        # - -exec ls -l {} \;: Runs ls -l on each file to show detailed info including modified date.
-        # 📌 Example Output:
-        # -rw-rw---- 1 user sdcard_rw  1024 Aug  4 22:30 file1.txt
-        # -rw-rw---- 1 user sdcard_rw  2048 Aug  3 18:15 file2.jpg
+        """
+            Pipeline breakdown:
+            1. ls -l --time-style=+"%Y-%m-%d"
+            - Lists directory contents in long format
+            - Formats dates as YYYY-MM-DD
+            
+            2. grep -v '^d'
+            - Filters out directories (lines starting with 'd')
+            - Only keeps regular files
+            
+            3. awk '{print $6, $7}'
+            - Extracts and prints field 6 (date) and field 7 (filename)
+            - Fields are space-separated
+            
+            Returns:
+                Prints to stdout: Each line contains "YYYY-MM-DD filename"
+                
+            Example output:
+                2025-08-05 script.sql
+                2025-08-04 config.txt
+                2025-08-03 readme.md
+                
+            Notes:
+                - No sorting applied (files appear in filesystem order)
+                - Only processes current directory (no subdirectories)
+                - Date format is ISO 8601 compatible (YYYY-MM-DD)
+        """
 
-        command = f"find {path} -maxdepth 1 -type f -exec ls -l {{}} \\;"
-        args = ["shell", command]
-        self.__execute_adb_command(args=args)
+        command2 = f"find {path} -maxdepth 1 -type f -exec ls -l {{}} \\;"
+        args = ["shell", command2]
+        result = self.__execute_adb_command(args=args)
+        
+        if result is None or result.stdout is None: return
+
+        files = list()
+        for line in result.stdout.splitlines():
+            date, _, filename = line.split(maxsplit=8)[5:8]
+            files.append((date, filename))
+
+        for date, filename in files:
+            self.logger.write(f"{date} {filename}")
+            self.logger.write('\n')
+        self.logger.flush()
 
 
 def get_menu_option(opciones_validas: list[str], logger: TextIOWrapper) -> str:
@@ -89,6 +131,7 @@ def get_menu_option(opciones_validas: list[str], logger: TextIOWrapper) -> str:
             print('\nOpciones:')
             print('1: Conectarse')
             print('2: Listar archivos')
+            print('3: Parear con el dispositivo')
             print('q: Salir')
             opcion = input("Opción:")
     except Exception as e:
@@ -97,44 +140,10 @@ def get_menu_option(opciones_validas: list[str], logger: TextIOWrapper) -> str:
     finally:
         return opcion
 
-def list_files_with_dates():
-    """
-    List files in current directory with their modification dates.
-    
-    Command: ls -l --time-style=+"%Y-%m-%d" | grep -v '^d' | awk '{print $6, $7}'
-    
-    Pipeline breakdown:
-    1. ls -l --time-style=+"%Y-%m-%d"
-       - Lists directory contents in long format
-       - Formats dates as YYYY-MM-DD
-       
-    2. grep -v '^d'
-       - Filters out directories (lines starting with 'd')
-       - Only keeps regular files
-       
-    3. awk '{print $6, $7}'
-       - Extracts and prints field 6 (date) and field 7 (filename)
-       - Fields are space-separated
-    
-    Returns:
-        Prints to stdout: Each line contains "YYYY-MM-DD filename"
-        
-    Example output:
-        2025-08-05 script.sql
-        2025-08-04 config.txt
-        2025-08-03 readme.md
-        
-    Notes:
-        - No sorting applied (files appear in filesystem order)
-        - Only processes current directory (no subdirectories)
-        - Date format is ISO 8601 compatible (YYYY-MM-DD)
-    """
-    pass
-
 with open('log-android.txt', 'w', encoding="utf-8") as file:
 
     file.write('\n\n--- EXECUTION --------------------------------------------------------------')
-    opciones_validas = ['1', '2', 'q']
+    opciones_validas = ['1', '2', '3', 'q']
     adb = ADBInterface(android_ip_port=android_ip, logger=file)
 
     opcion = '1'
@@ -145,6 +154,9 @@ with open('log-android.txt', 'w', encoding="utf-8") as file:
             print('Opción ejecutada exitosamente')
         elif opcion == '2':
             adb.log_files_in_folder(path=android_path)
+            print('Opción ejecutada exitosamente')
+        elif opcion == '3':
+            adb.parear_con_dispositivo()
             print('Opción ejecutada exitosamente')
         elif opcion == 'q':
             adb.disconnect()
