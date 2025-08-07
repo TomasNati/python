@@ -63,19 +63,31 @@ class ADBInterface:
         if not android_address: return
         self.__execute_adb_command(['pair', android_address], capture_output=False, text=False)
 
-    def connect(self) -> CompletedProcess[str]:
-        port = input('Puerto: ')
-        if not port: return
-            
+    def __inner_connect(self, address: str) -> bool:
         retries = 0
         connected = False
         while not connected and retries < 3:
             retries += 1
-            self.__execute_adb_command(['connect', f'{android_ip}:{port}'])
+            self.__execute_adb_command(['connect', address])
             connected = self.__check_android_connected()
+        
+        return connected
 
-        if not connected:
-            print('Connection failed.')
+
+    def connect(self) -> bool:
+        connected = self.__check_android_connected()
+        if connected: return True
+
+        connected = self.__inner_connect(self.android_ip_port)
+        if connected: return True
+
+        print(f'La conexión falló para {self.android_ip_port}')
+        alt_address = input('Ingrese un <ip:puerto> alternativa: ')            
+        connected = self.__inner_connect(alt_address)
+        
+        if not connected: print('La conexión falló para el <ip:puerto> ingresado')
+
+        return connected
         
     def disconnect(self) -> CompletedProcess[str]:
         return self.__execute_adb_command(['disconnect'])
@@ -155,11 +167,14 @@ def elegir_celular() -> Celular | None:
         return None
 
 def main(): 
+    celular = elegir_celular()
+    if celular is None: return
+
     with open('log-android.txt', 'w', encoding="utf-8") as file:
 
         file.write('\n\n--- EXECUTION --------------------------------------------------------------')
         opciones_validas = ['1', '2', '3', 'q']
-        adb = ADBInterface(android_ip_port=android_ip, logger=file)
+        adb = ADBInterface(android_ip_port=celular.address(), logger=file)
 
         opcion = '1'
         while opcion in opciones_validas:
@@ -180,5 +195,4 @@ def main():
         file.write('\n----------------------------------------------------------------------------')
 
 
-celular = elegir_celular()
-if celular is not None: print(f'IP del celular elegido: {celular.ip}:{celular.port}')
+main()

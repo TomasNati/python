@@ -21,6 +21,9 @@ class Celular(Dispositivo):
         self.ip = ip
         self.port = port
 
+    def address(self) -> str:
+        return f'{self.ip}:{self.port}'
+
 
 class Config:
     def __init__(self):
