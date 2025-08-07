@@ -6,38 +6,13 @@
 #     a. Obtengo el año del archivo
 #     b. Lo copio en la carpeta de 2\año del archivo. Si existe el archivo, saltear la copia.
 #     c. Informar cuantos archivos se copiaron por año
-from config import  CONFIG
+from clases import Config
 import os
 import datetime
 import stat
 import shutil
-
-class Dispositivo:
-    def __init__(self, init_names: list[str], init_paths: list[str], destination: str):
-        self.names: list[str] = init_names
-        self.paths: list[str] = init_paths
-        self.destination = destination
-
-    def get_paths(self) -> list[str]:
-        paths = []
-        for name in self.names:
-            for path in self.paths:
-                full_path = f'{name}{path}'
-                paths.append(full_path)
-        
-        return paths
-
-class Config:
-    def __init__(self):
-        self.celular = Dispositivo(CONFIG['celular']['names'], 
-                               CONFIG['celular']['paths'],
-                               CONFIG['celular']['destination'])
-        self.kindle = Dispositivo(CONFIG['kindle']['names'], 
-                               CONFIG['kindle']['paths'],
-                               CONFIG['kindle']['destination'])
         
 config = Config()
-
 
 def is_hidden(attributes: int) -> bool:
     return bool(attributes & stat.FILE_ATTRIBUTE_HIDDEN)

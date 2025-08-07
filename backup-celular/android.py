@@ -1,6 +1,9 @@
 from io import TextIOWrapper
 from subprocess import run, CompletedProcess
 import os
+from clases import Config, Celular
+
+celulares = Config().celulares
 
 android_path = "/sdcard/DCIM/Hablame/"  # Most common
 android_ip = '192.168.1.56'
@@ -122,7 +125,6 @@ class ADBInterface:
             self.logger.write('\n')
         self.logger.flush()
 
-
 def get_menu_option(opciones_validas: list[str], logger: TextIOWrapper) -> str:
     try:
         opcion = ''
@@ -139,27 +141,44 @@ def get_menu_option(opciones_validas: list[str], logger: TextIOWrapper) -> str:
         print('An error has ocurred.')
     finally:
         return opcion
+    
+def elegir_celular() -> Celular | None:
+    print('Celulares:')
+    for index, celular in enumerate(celulares):
+        print(f'  ({index + 1}) {celular.name}')
+    user_input = input('\nElige el celular, o cualquier otra tecla para salir: ')
+    try:
+        cel_index = int(user_input)
+        if cel_index > 0 and cel_index <= len(celulares):
+            return celulares[cel_index - 1] 
+    except:
+        return None
 
-with open('log-android.txt', 'w', encoding="utf-8") as file:
+def main(): 
+    with open('log-android.txt', 'w', encoding="utf-8") as file:
 
-    file.write('\n\n--- EXECUTION --------------------------------------------------------------')
-    opciones_validas = ['1', '2', '3', 'q']
-    adb = ADBInterface(android_ip_port=android_ip, logger=file)
+        file.write('\n\n--- EXECUTION --------------------------------------------------------------')
+        opciones_validas = ['1', '2', '3', 'q']
+        adb = ADBInterface(android_ip_port=android_ip, logger=file)
 
-    opcion = '1'
-    while opcion in opciones_validas:
-        opcion = get_menu_option(opciones_validas=opciones_validas, logger=file)
-        if opcion == '1':
-            adb.connect()
-            print('Opción ejecutada exitosamente')
-        elif opcion == '2':
-            adb.log_files_in_folder(path=android_path)
-            print('Opción ejecutada exitosamente')
-        elif opcion == '3':
-            adb.parear_con_dispositivo()
-            print('Opción ejecutada exitosamente')
-        elif opcion == 'q':
-            adb.disconnect()
-            opcion = ''
-               
-    file.write('\n----------------------------------------------------------------------------')
+        opcion = '1'
+        while opcion in opciones_validas:
+            opcion = get_menu_option(opciones_validas=opciones_validas, logger=file)
+            if opcion == '1':
+                adb.connect()
+                print('Opción ejecutada exitosamente')
+            elif opcion == '2':
+                adb.log_files_in_folder(path=android_path)
+                print('Opción ejecutada exitosamente')
+            elif opcion == '3':
+                adb.parear_con_dispositivo()
+                print('Opción ejecutada exitosamente')
+            elif opcion == 'q':
+                adb.disconnect()
+                opcion = ''
+                
+        file.write('\n----------------------------------------------------------------------------')
+
+
+celular = elegir_celular()
+if celular is not None: print(f'IP del celular elegido: {celular.ip}:{celular.port}')
