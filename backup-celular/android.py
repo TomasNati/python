@@ -2,19 +2,20 @@ from io import TextIOWrapper
 from subprocess import run, CompletedProcess
 import os
 from clases import Config, Celular
+import console
 
 celulares = Config().celulares
 
 android_path = "/sdcard/DCIM/Hablame/"  # Most common
-android_ip = '192.168.1.56'
 
 class ADBInterface:
-    def __init__(self, android_ip_port:str, logger: TextIOWrapper):
+    def __init__(self, ip:str, port: str, logger: TextIOWrapper):
         self.logger = logger
 
         script_dir = os.path.dirname(os.path.abspath(__file__))
         self.__adb_path = os.path.join(script_dir, "android/platform-tools/adb.exe")  # Windows
-        self.android_ip_port = android_ip_port
+        self.ip = ip
+        self.port = port
 
     def __execute_adb_command(self, args: list, capture_output: bool = True, text: bool = True) -> CompletedProcess[str] | None:
         if (len(args) == 0):
@@ -68,24 +69,42 @@ class ADBInterface:
         connected = False
         while not connected and retries < 3:
             retries += 1
-            self.__execute_adb_command(['connect', address])
-            connected = self.__check_android_connected()
+            result = self.__execute_adb_command(['connect', address])
+            connected = result.stdout is not None and 'connected to' in result.stdout
         
         return connected
 
+    def connected(self) -> bool:
+        return self.__check_android_connected()
 
     def connect(self) -> bool:
         connected = self.__check_android_connected()
         if connected: return True
 
-        connected = self.__inner_connect(self.android_ip_port)
+        connected = self.__inner_connect(f'{self.ip}:{self.port}')
         if connected: return True
 
-        print(f'La conexión falló para {self.android_ip_port}')
-        alt_address = input('Ingrese un <ip:puerto> alternativa: ')            
+        texto = input(
+              f'La conexión falló para {self.ip}:{self.port}\n'
+              ' - Ingresar ip. Tipear 1 <ip>\n'
+              ' - Ingresar puerto. Tipear 2 <port> \n'
+              ' - Ingresar ip:puerto. Tipear 3 <ip:port>\n' 
+              'Opción: '
+            )
+
+        opcion = texto[0]
+        if opcion == '1':
+            alt_address = f'{texto.split(' ')[1]}:{self.port}'
+        elif opcion == '2':
+            alt_address = f'{self.ip}:{texto.split(' ')[1]}'
+        elif opcion == '3':
+            alt_address = texto.split(' ')[1]
+        else:
+            return False
+
         connected = self.__inner_connect(alt_address)
         
-        if not connected: print('La conexión falló para el <ip:puerto> ingresado')
+        if not connected: console.print_error('La conexión falló para el <ip:puerto> ingresado')
 
         return connected
         
@@ -174,7 +193,11 @@ def main():
 
         file.write('\n\n--- EXECUTION --------------------------------------------------------------')
         opciones_validas = ['1', '2', '3', 'q']
-        adb = ADBInterface(android_ip_port=celular.address(), logger=file)
+        adb = ADBInterface(ip=celular.ip, port=celular.port, logger=file)
+        connected = adb.connected()
+
+        if connected: console.print_info('Status: connected')
+        else: console.print_error('Status: disconnected')
 
         opcion = '1'
         while opcion in opciones_validas:
