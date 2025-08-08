@@ -1,4 +1,12 @@
-from config import CONFIG
+import os
+import json
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+config_path = os.path.join(script_dir, "config.json")
+
+with open(config_path, 'r') as f:
+    CONFIG = json.load(f)
 
 class Dispositivo:
     def __init__(self, init_name: str, init_paths: list[str], destination: str):
@@ -40,3 +48,26 @@ class Config:
                                CONFIG['kindle']['paths'],
                                CONFIG['kindle']['destination'])
         
+def probar(): 
+    # 2. Load, modify, and save the config
+    try:
+        # Read config
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+
+        # Modify config (example: update first entry's IP and Port)
+        config['celulares'][0]['ip'] = '192.168.1.100'
+        config['celulares'][0]['port'] = 5678
+
+        # Save updated config
+        with open(config_path, 'w') as f:
+            json.dump(config, f, indent=4)
+
+        print("✅ Config updated successfully!")
+    except FileNotFoundError:
+        print(f"❌ Error: {config_path} not found!")
+    except json.JSONDecodeError:
+        print(f"❌ Error: Invalid JSON in {config_path}!")
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}")
+            
