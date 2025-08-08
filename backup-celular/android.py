@@ -4,18 +4,16 @@ import os
 from clases import Config, Celular
 import console
 
-celulares = Config().celulares
-
+config = Config()
 android_path = "/sdcard/DCIM/Hablame/"  # Most common
 
 class ADBInterface:
-    def __init__(self, ip:str, port: str, logger: TextIOWrapper):
+    def __init__(self, celular: Celular, logger: TextIOWrapper):
         self.logger = logger
 
         script_dir = os.path.dirname(os.path.abspath(__file__))
         self.__adb_path = os.path.join(script_dir, "android/platform-tools/adb.exe")  # Windows
-        self.ip = ip
-        self.port = port
+        self.celular = celular
 
     def __execute_adb_command(self, args: list, capture_output: bool = True, text: bool = True) -> CompletedProcess[str] | None:
         if (len(args) == 0):
@@ -81,11 +79,11 @@ class ADBInterface:
         connected = self.__check_android_connected()
         if connected: return True
 
-        connected = self.__inner_connect(f'{self.ip}:{self.port}')
+        connected = self.__inner_connect(f'{self.celular.ip}:{self.celular.port}')
         if connected: return True
 
         texto = input(
-              f'La conexión falló para {self.ip}:{self.port}\n'
+              f'La conexión falló para {self.celular.ip}:{self.celular.port}\n'
               ' - Ingresar ip. Tipear 1 <ip>\n'
               ' - Ingresar puerto. Tipear 2 <port> \n'
               ' - Ingresar ip:puerto. Tipear 3 <ip:port>\n' 
@@ -94,9 +92,9 @@ class ADBInterface:
 
         opcion = texto[0]
         if opcion == '1':
-            alt_address = f'{texto.split(' ')[1]}:{self.port}'
+            alt_address = f'{texto.split(' ')[1]}:{self.celular.port}'
         elif opcion == '2':
-            alt_address = f'{self.ip}:{texto.split(' ')[1]}'
+            alt_address = f'{self.celular.ip}:{texto.split(' ')[1]}'
         elif opcion == '3':
             alt_address = texto.split(' ')[1]
         else:
@@ -175,13 +173,13 @@ def get_menu_option(opciones_validas: list[str], logger: TextIOWrapper) -> str:
     
 def elegir_celular() -> Celular | None:
     print('Celulares:')
-    for index, celular in enumerate(celulares):
+    for index, celular in enumerate(config.celulares):
         print(f'  ({index + 1}) {celular.name}')
     user_input = input('\nElige el celular, o cualquier otra tecla para salir: ')
     try:
         cel_index = int(user_input)
-        if cel_index > 0 and cel_index <= len(celulares):
-            return celulares[cel_index - 1] 
+        if cel_index > 0 and cel_index <= len(config.celulares):
+            return config.celulares[cel_index - 1] 
     except:
         return None
 
@@ -193,7 +191,7 @@ def main():
 
         file.write('\n\n--- EXECUTION --------------------------------------------------------------')
         opciones_validas = ['1', '2', '3', 'q']
-        adb = ADBInterface(ip=celular.ip, port=celular.port, logger=file)
+        adb = ADBInterface(celular=celular, logger=file)
         connected = adb.connected()
 
         if connected: console.print_info('Status: connected')

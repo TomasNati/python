@@ -1,13 +1,6 @@
 import os
 import json
 
-script_dir = os.path.dirname(os.path.abspath(__file__))
-
-config_path = os.path.join(script_dir, "config.json")
-
-with open(config_path, 'r') as f:
-    CONFIG = json.load(f)
-
 class Dispositivo:
     def __init__(self, init_name: str, init_paths: list[str], destination: str):
         self.name = init_name
@@ -35,18 +28,32 @@ class Celular(Dispositivo):
 
 class Config:
     def __init__(self):
-        self.celulares: list[Celular] = []
-        for celular_config in CONFIG['celulares']:
-            celular = Celular(init_name=celular_config['name'],
-                              init_paths=celular_config['paths'],
-                              destination=celular_config['destination'],
-                              ip=celular_config['ip'],
-                              port=celular_config['port'])
-            self.celulares.append(celular)
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        self.config_path = os.path.join(script_dir, "config.json")
 
-        self.kindle = Dispositivo(CONFIG['kindle']['name'], 
-                               CONFIG['kindle']['paths'],
-                               CONFIG['kindle']['destination'])
+        with open(self.config_path, 'r') as f:
+            CONFIG = json.load(f)
+
+            self.celulares: list[Celular] = []
+            for celular_config in CONFIG['celulares']:
+                celular = Celular(init_name=celular_config['name'],
+                                init_paths=celular_config['paths'],
+                                destination=celular_config['destination'],
+                                ip=celular_config['ip'],
+                                port=celular_config['port'])
+                self.celulares.append(celular)
+
+            self.kindle = Dispositivo(CONFIG['kindle']['name'], 
+                                CONFIG['kindle']['paths'],
+                                CONFIG['kindle']['destination'])
+            
+    def actualizar_celular_port(self, celular: Celular, new_port: str) -> None:
+        with open(self.config_path, 'r') as f:
+            config = json.load(f)
+        
+            # . Identificar el celular en el json
+            # . Cambiar el puerto
+            # . Grabar. Es posible que pueda usar un método general, donde ip o port sean un parámetro, y new_value lo que se les asigna
         
 def probar(): 
     # 2. Load, modify, and save the config
