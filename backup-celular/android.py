@@ -1,5 +1,5 @@
 from io import TextIOWrapper
-from subprocess import run, CompletedProcess
+from subprocess import run, CompletedProcess, TimeoutExpired
 import os
 from clases import Config, Celular
 import console
@@ -15,7 +15,7 @@ class ADBInterface:
         self.__adb_path = os.path.join(script_dir, "android/platform-tools/adb.exe")  # Windows
         self.celular = celular
 
-    def __execute_adb_command(self, args: list, capture_output: bool = True, text: bool = True) -> CompletedProcess[str] | None:
+    def __execute_adb_command(self, args: list, capture_output: bool = True, text: bool = True, timeout: int = 5) -> CompletedProcess[str] | None:
         if (len(args) == 0):
             self.logger.write('\nError: there are no arguments to execute adb.exe with')
             return None
@@ -24,7 +24,12 @@ class ADBInterface:
         self.logger.flush()  # Flush immediately to see command execution
         
         args.insert(0, self.__adb_path)
-        result: CompletedProcess[str] = run(args=args, capture_output=capture_output, text=text)
+        try:
+            result: CompletedProcess[str] = run(args=args, capture_output=capture_output, text=text, timeout=timeout)
+        except TimeoutExpired:
+            self.logger.write(f"\nCommand timed out after {timeout} seconds\n")
+            self.logger.flush()
+            return None
 
         if text:
             self.logger.write("\nSTDOUT:\n")
@@ -60,15 +65,15 @@ class ADBInterface:
     def parear_con_dispositivo(self) -> None:
         android_address = input('Ingrese ip:puerto del dispositivo:')
         if not android_address: return
-        self.__execute_adb_command(['pair', android_address], capture_output=False, text=False)
+        self.__execute_adb_command(['pair', android_address], capture_output=False, text=False, timeout=30)
 
     def __inner_connect(self, address: str) -> bool:
         retries = 0
         connected = False
         while not connected and retries < 3:
             retries += 1
-            result = self.__execute_adb_command(['connect', address])
-            connected = result.stdout is not None and 'connected to' in result.stdout
+            result = self.__execute_adb_command(['connect', address], timeout=10)
+            connected = result is not None and result.stdout is not None and 'connected to' in result.stdout
         
         return connected
 
@@ -91,21 +96,28 @@ class ADBInterface:
             )
 
         opcion = texto[0]
+        updates = {}
         if opcion == '1':
-            alt_address = f'{texto.split(' ')[1]}:{self.celular.port}'
+            updates['ip'] = texto.split(' ')[1]
+            alt_address = f'{updates['ip']}:{self.celular.port}'
         elif opcion == '2':
-            alt_address = f'{self.celular.ip}:{texto.split(' ')[1]}'
+            updates['port'] = texto.split(' ')[1]
+            alt_address = f'{self.celular.ip}:{updates['port']}'
         elif opcion == '3':
-            alt_address = texto.split(' ')[1]
+            updates['ip'], updates['port'] = texto.split(' ')[1].split(':')
+            alt_address = f'{updates['ip']}:{updates['port']}'
         else:
             return False
 
         connected = self.__inner_connect(alt_address)
         
-        if not connected: console.print_error('La conexión falló para el <ip:puerto> ingresado')
+        if connected: 
+            config.actualizar_celular_propiedad(self.celular, updates)
+            return True
+        else: 
+            console.print_error('La conexión falló para el <ip:puerto> ingresado')
+            return False
 
-        return connected
-        
     def disconnect(self) -> CompletedProcess[str]:
         return self.__execute_adb_command(['disconnect'])
 
@@ -140,7 +152,7 @@ class ADBInterface:
 
         command2 = f"find {path} -maxdepth 1 -type f -exec ls -l {{}} \\;"
         args = ["shell", command2]
-        result = self.__execute_adb_command(args=args)
+        result = self.__execute_adb_command(args=args, timeout=60)
         
         if result is None or result.stdout is None: return
 

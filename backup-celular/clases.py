@@ -47,7 +47,7 @@ class Config:
                                 CONFIG['kindle']['paths'],
                                 CONFIG['kindle']['destination'])
 
-    def actualizar_celular_propiedad(self, celular: Celular, property: str, new_value: str) -> Celular | None:
+    def actualizar_celular_propiedad(self, celular: Celular, props_values: dict[str, str | int]) -> Celular | None:
         try:
             with open(self.config_path, 'r') as f:
                 config = json.load(f)
@@ -57,7 +57,8 @@ class Config:
                 print(f"❌ Error: Celular {celular.name} not found in config!")
                 return
 
-            celular_data[property] = new_value
+            for prop, value in props_values.items():
+                celular_data[prop] = value
 
             with open(self.config_path, 'w') as f:
                 json.dump(config, f, indent=4)
