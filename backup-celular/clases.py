@@ -46,35 +46,36 @@ class Config:
             self.kindle = Dispositivo(CONFIG['kindle']['name'], 
                                 CONFIG['kindle']['paths'],
                                 CONFIG['kindle']['destination'])
-            
-    def actualizar_celular_port(self, celular: Celular, new_port: str) -> None:
-        with open(self.config_path, 'r') as f:
-            config = json.load(f)
-        
-            # . Identificar el celular en el json
-            # . Cambiar el puerto
-            # . Grabar. Es posible que pueda usar un método general, donde ip o port sean un parámetro, y new_value lo que se les asigna
-        
-def probar(): 
-    # 2. Load, modify, and save the config
-    try:
-        # Read config
-        with open(config_path, 'r') as f:
-            config = json.load(f)
 
-        # Modify config (example: update first entry's IP and Port)
-        config['celulares'][0]['ip'] = '192.168.1.100'
-        config['celulares'][0]['port'] = 5678
+    def actualizar_celular_propiedad(self, celular: Celular, property: str, new_value: str) -> Celular | None:
+        try:
+            with open(self.config_path, 'r') as f:
+                config = json.load(f)
 
-        # Save updated config
-        with open(config_path, 'w') as f:
-            json.dump(config, f, indent=4)
+            celular_data = next((item for item in config['celulares'] if item['name'] == celular.name), None)
+            if not celular_data:
+                print(f"❌ Error: Celular {celular.name} not found in config!")
+                return
 
-        print("✅ Config updated successfully!")
-    except FileNotFoundError:
-        print(f"❌ Error: {config_path} not found!")
-    except json.JSONDecodeError:
-        print(f"❌ Error: Invalid JSON in {config_path}!")
-    except Exception as e:
-        print(f"❌ Unexpected error: {e}")
+            celular_data[property] = new_value
+
+            with open(self.config_path, 'w') as f:
+                json.dump(config, f, indent=4)
+
+            print("✅ Config updated successfully!")
+
+        except FileNotFoundError:
+            print(f"❌ Error: {self.config_path} not found!")
+        except json.JSONDecodeError:
+            print(f"❌ Error: Invalid JSON in {self.config_path}!")
+        except Exception as e:
+            print(f"❌ Unexpected error: {e}")
+        finally:
+            print("🔄 Reloading config...")
+            self.__init__()
+            celular_actualizado = next((cel for cel in self.celulares if cel.name == celular.name), None)
+            return celular_actualizado
+
+      
+   
             
