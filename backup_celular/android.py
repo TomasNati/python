@@ -41,7 +41,13 @@ def main():
     celular = elegir_celular()
     if celular is None: return
 
-    logging.basicConfig(filename='backup.log', level=logging.INFO)
+    logging.basicConfig(
+        filename='backup.log', 
+        level=logging.INFO, 
+        filemode='w',
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M'
+    )
 
     logger.info('\n\n--- EXECUTION --------------------------------------------------------------')
     opciones_validas = ['1', '2', '3', 'q']
@@ -58,7 +64,13 @@ def main():
             adb.connect()
             print('Opción ejecutada exitosamente')
         elif opcion == '2':
-            adb.log_files_in_folder(path=android_path)
+            files_per_year = adb.log_files_in_folder(path=celular.paths[0])
+            for year in files_per_year:
+                logger.info(f'------ YEAR {year} -----------------')
+                files = files_per_year[year]
+                for file in files:
+                    logger.info(f'File path: {file}')
+
             print('Opción ejecutada exitosamente')
         elif opcion == '3':
             adb.parear_con_dispositivo()

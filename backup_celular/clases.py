@@ -17,13 +17,9 @@ class Dispositivo(ABC):
         self.paths = init_paths
         self.destination = destination
 
+    @abstractmethod
     def get_paths(self) -> list[str]:
-        paths = []
-        for path in self.paths:
-            full_path = f'{self.name}{path}'
-            paths.append(full_path)
-            
-        return paths
+        pass
     
     @abstractmethod
     def get_files_per_year(self, path: str, year_from: int | None) -> dict | None:
@@ -39,6 +35,14 @@ class Kindle(Dispositivo):
 
     def __is_hidden(attributes: int) -> bool:
         return bool(attributes & stat.FILE_ATTRIBUTE_HIDDEN)
+    
+    def get_paths(self) -> list[str]:
+        paths = []
+        for path in self.paths:
+            full_path = f'{self.name}{path}'
+            paths.append(full_path)
+            
+        return paths
     
     def get_files_per_year(self, path: str, year_from: int | None) -> dict | None:
         if not os.path.exists(path):
@@ -88,6 +92,13 @@ class Celular(Dispositivo):
 
     def address(self) -> str:
         return f'{self.ip}:{self.port}'
+    
+    def get_paths(self) -> list[str]:
+        paths = []
+        for path in self.paths:
+            paths.append(path)
+            
+        return paths
     
     def get_files_per_year(self, path: str, year_from: int | None) -> dict | None:
         return {}
@@ -162,7 +173,12 @@ class ADBInterface:
         self.__adb_path = os.path.join(script_dir, "android/platform-tools/adb.exe")  # Windows
         self.celular = celular
 
-    def __execute_adb_command(self, args: list, capture_output: bool = True, text: bool = True, timeout: int = 5) -> CompletedProcess[str] | None:
+    def __execute_adb_command(self, 
+                              args: list, 
+                              capture_output: bool = True, 
+                              text: bool = True, 
+                              timeout: int = 5,
+                              log_stdout: bool = False) -> CompletedProcess[str] | None:
         if (len(args) == 0):
             logger.error('\nError: there are no arguments to execute adb.exe with')
             return None
@@ -177,8 +193,9 @@ class ADBInterface:
             return None
 
         if text:
-            logger.info("\nSTDOUT:\n")
-            logger.info(result.stdout)
+            if log_stdout:
+                logger.info("\nSTDOUT:\n")
+                logger.info(result.stdout)
 
             if len(result.stderr) > 0: 
                 logger.error("STDERR (if any):")
@@ -264,49 +281,32 @@ class ADBInterface:
     def disconnect(self) -> CompletedProcess[str]:
         return self.__execute_adb_command(['disconnect'])
 
-    def log_files_in_folder(self, path: str) -> None:
-        """
-            Pipeline breakdown:
-            1. ls -l --time-style=+"%Y-%m-%d"
-            - Lists directory contents in long format
-            - Formats dates as YYYY-MM-DD
+    def log_files_in_folder(self, path: str) -> dict | None:
+        try:
+            command2 = f"find {path} -maxdepth 1 -type f -exec ls -l {{}} \\;"
+            args = ["shell", command2]
+            result = self.__execute_adb_command(args=args, timeout=60)
             
-            2. grep -v '^d'
-            - Filters out directories (lines starting with 'd')
-            - Only keeps regular files
+            if result is None or result.stdout is None: return
+
+            files = list()
+            for line in result.stdout.splitlines():
+                date, _, filename = line.split(maxsplit=8)[5:8]
+                files.append((date, filename))
+
+            files_per_year = dict()
+            for date, filename in files:
+                year = date.split('-')[0]
+                if not year in files_per_year:
+                    files_per_year[year] = []
+                files_per_year[year].append(filename)
             
-            3. awk '{print $6, $7}'
-            - Extracts and prints field 6 (date) and field 7 (filename)
-            - Fields are space-separated
-            
-            Returns:
-                Prints to stdout: Each line contains "YYYY-MM-DD filename"
-                
-            Example output:
-                2025-08-05 script.sql
-                2025-08-04 config.txt
-                2025-08-03 readme.md
-                
-            Notes:
-                - No sorting applied (files appear in filesystem order)
-                - Only processes current directory (no subdirectories)
-                - Date format is ISO 8601 compatible (YYYY-MM-DD)
-        """
+            files_per_year = dict(sorted(files_per_year.items(), reverse=True))
 
-        command2 = f"find {path} -maxdepth 1 -type f -exec ls -l {{}} \\;"
-        args = ["shell", command2]
-        result = self.__execute_adb_command(args=args, timeout=60)
-        
-        if result is None or result.stdout is None: return
-
-        files = list()
-        for line in result.stdout.splitlines():
-            date, _, filename = line.split(maxsplit=8)[5:8]
-            files.append((date, filename))
-
-        for date, filename in files:
-            logger.info(f"{date} {filename}")
-            logger.info('\n')
+            return files_per_year
+        except Exception as e:
+            logger.error(f'An error has occurred on log_files_in_folder: ', e)
+            return {}
 
 
       
