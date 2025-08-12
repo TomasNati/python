@@ -20,7 +20,7 @@ def backup_files(device: Dispositivo, source_path:str, dest_folder: str,year_fro
         logger.info(f'\n--- YEAR {year} -------------------------------------------------------')
         
         for file_info in files:
-            log_res = device.copy_if_not_exists(file_info=file_info,dest_folder=f'{dest_folder}\\{year}')
+            log_res = device.copy_if_not_exists(file_info=file_info,dest_folder=f'{dest_folder}/{year}')
             
             if log_res.lower().find('skipped') > -1: skipped += 1
             else: copied +=1 

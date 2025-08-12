@@ -8,6 +8,7 @@ import shutil
 from abc import ABC, abstractmethod
 from subprocess import CompletedProcess, TimeoutExpired, run
 import console
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -156,6 +157,17 @@ class Celular(Dispositivo):
             connected = result is not None and result.stdout is not None and 'connected to' in result.stdout
         
         return connected
+    
+    def _get_date_and_filename(self, line:str) -> tuple[str, str]:
+        # Pattern: permissions user group size date time filepath
+        pattern = r'^(\S+)\s+\d+\s+\S+\s+\S+\s+\d+\s+(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})\s+(.+)$'
+        match = re.match(pattern, line)
+
+        if match:
+            date = match.group(2)         # 2025-07-05
+            filepath = match.group(4)     # full path with spaces
+
+        return date, filepath
 
     def connected(self) -> bool:
         return self.__check_android_connected()
@@ -211,7 +223,7 @@ class Celular(Dispositivo):
     
     def get_files_per_year(self, path: str, year_from: int | None) -> dict | None:
         try:
-            command2 = f"find {path} -maxdepth 1 -type f -exec ls -l {{}} \\;"
+            command2 = f"find '{path}' -maxdepth 1 -type f -exec ls -l {{}} \\;"
             args = ["shell", command2]
             result = self.__execute_adb_command(args=args, timeout=60)
             
@@ -219,7 +231,7 @@ class Celular(Dispositivo):
 
             files = list()
             for line in result.stdout.splitlines():
-                date, _, filepath = line.split(maxsplit=8)[5:8]
+                date, filepath = self._get_date_and_filename(line)
                 files.append((date, filepath))
 
             files_per_year = dict()
