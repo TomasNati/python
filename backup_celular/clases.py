@@ -26,7 +26,7 @@ class Dispositivo(ABC):
         pass
 
     @abstractmethod
-    def copy_if_not_exists(file_info: tuple[str, str], dest_folder: str) -> str:
+    def copy_if_not_exists(self, file_info: tuple[str, str], dest_folder: str) -> str:
         pass
     
 class Kindle(Dispositivo):
@@ -219,16 +219,18 @@ class Celular(Dispositivo):
 
             files = list()
             for line in result.stdout.splitlines():
-                date, _, filename = line.split(maxsplit=8)[5:8]
-                files.append((date, filename))
+                date, _, filepath = line.split(maxsplit=8)[5:8]
+                files.append((date, filepath))
 
             files_per_year = dict()
-            for date, filename in files:
+            for date, filepath in files:
                 year = date.split('-')[0]
                 if year_from is not None and int(year) < year_from: continue
                 if not year in files_per_year:
                     files_per_year[year] = []
-                files_per_year[year].append(filename)
+
+                filename = filepath.split('/')[-1]
+                files_per_year[year].append((filename, filepath))
 
             files_per_year = dict(sorted(files_per_year.items(), reverse=True))
 
@@ -237,8 +239,10 @@ class Celular(Dispositivo):
             logger.error(f'An error has occurred on log_files_in_folder: ', e)
             return {}
 
-    def copy_if_not_exists(file_info: tuple[str, str], dest_folder: str) -> str:
-        return {}
+    def copy_if_not_exists(self, file_info: tuple[str, str], dest_folder: str) -> str:
+        filename, filepath = file_info
+        result = f'Copying file {filepath} to {dest_folder}/{filename}'
+        return result
 
 class Config:
     def __init__(self):

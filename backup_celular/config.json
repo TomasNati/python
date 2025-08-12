@@ -5,9 +5,9 @@
             "ip": "192.168.1.56",
             "port": "39755",
             "paths": [
-                "/sdcard/DCIM/Camera",
-                "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images",
-                "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video"
+                "sdcard/DCIM/Camera",
+                "sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images",
+                "sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video"
             ],
             "destination": "C:/Users/Andres/Backups/celular/Andres"
         },
@@ -16,9 +16,9 @@
             "ip": "192.168.1.56",
             "port": 12345,
             "paths": [
-                "/sdcard/DCIM/Camera",
-                "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images",
-                "/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video"
+                "sdcard/DCIM/Camera",
+                "sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images",
+                "sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video"
             ],
             "destination": "C:/Users/Andres/Backups/celular/Natalia"
         }
