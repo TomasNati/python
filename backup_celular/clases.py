@@ -90,6 +90,115 @@ class Celular(Dispositivo):
         self.ip = ip
         self.port = port
 
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        self.__adb_path = os.path.join(script_dir, "android/platform-tools/adb.exe")  # Windows
+
+    def __execute_adb_command(self, 
+                              args: list, 
+                              capture_output: bool = True, 
+                              text: bool = True, 
+                              timeout: int = 5,
+                              log_stdout: bool = False) -> CompletedProcess[str] | None:
+        if (len(args) == 0):
+            logger.error('\nError: there are no arguments to execute adb.exe with')
+            return None
+        
+        logger.info(f'\nExecuting ./adb {' '.join(args)}')
+        
+        args.insert(0, self.__adb_path)
+        try:
+            result: CompletedProcess[str] = run(args=args, capture_output=capture_output, text=text, timeout=timeout)
+        except TimeoutExpired:
+            logger.error(f"\nCommand timed out after {timeout} seconds\n")
+            return None
+
+        if text:
+            if log_stdout:
+                logger.info("\nSTDOUT:\n")
+                logger.info(result.stdout)
+
+            if len(result.stderr) > 0: 
+                logger.error("STDERR (if any):")
+                logger.error(result.stderr)
+                logger.error('\n\n')
+            
+        return result
+
+    def __check_android_connected(self) -> bool:
+        result = self.__execute_adb_command(['devices'], log_stdout=True)
+        lines = result.stdout.splitlines()
+        if len(lines) != 3: 
+            print(f'Error. Invalid number of lines: {len(lines)}')
+            return False
+
+        ip_line = lines[1].split()
+        if len(ip_line) != 2: 
+            print(f'Error. Invalid number of lines for ip line: {len(ip_line)}')
+            return False
+        
+        if ip_line[1].lower() != 'device': 
+            print(f'Error. The attached element is not a device: {ip_line[1]}')
+            return False
+        
+        return True
+    
+    def parear_con_dispositivo(self) -> None:
+        android_address = input('Ingrese ip:puerto del dispositivo:')
+        if not android_address: return
+        self.__execute_adb_command(['pair', android_address], capture_output=False, text=False, timeout=30)
+
+    def __inner_connect(self, address: str) -> bool:
+        retries = 0
+        connected = False
+        while not connected and retries < 3:
+            retries += 1
+            result = self.__execute_adb_command(['connect', address], timeout=10, log_stdout=True)
+            connected = result is not None and result.stdout is not None and 'connected to' in result.stdout
+        
+        return connected
+
+    def connected(self) -> bool:
+        return self.__check_android_connected()
+
+    def connect(self) -> tuple[bool, dict]:
+        connected = self.__check_android_connected()
+        if connected: return [True, {}]
+
+        connected = self.__inner_connect(f'{self.ip}:{self.port}')
+        if connected: return [True, {}]
+
+        texto = input(
+              f'La conexión falló para {self.ip}:{self.port}\n'
+              ' - Ingresar ip. Tipear 1 <ip>\n'
+              ' - Ingresar puerto. Tipear 2 <port> \n'
+              ' - Ingresar ip:puerto. Tipear 3 <ip:port>\n' 
+              'Opción: '
+            )
+
+        opcion = texto[0]
+        updates = {}
+        if opcion == '1':
+            updates['ip'] = texto.split(' ')[1]
+            alt_address = f'{updates['ip']}:{self.port}'
+        elif opcion == '2':
+            updates['port'] = texto.split(' ')[1]
+            alt_address = f'{self.ip}:{updates['port']}'
+        elif opcion == '3':
+            updates['ip'], updates['port'] = texto.split(' ')[1].split(':')
+            alt_address = f'{updates['ip']}:{updates['port']}'
+        else:
+            return False
+
+        connected = self.__inner_connect(alt_address)
+
+        if connected: return [True, updates]
+        else: 
+            console.print_error('La conexión falló para el <ip:puerto> ingresado')
+            return [False, updates]
+
+    def disconnect(self) -> CompletedProcess[str]:
+        return self.__execute_adb_command(['disconnect'])
+
     def address(self) -> str:
         return f'{self.ip}:{self.port}'
     
@@ -101,7 +210,32 @@ class Celular(Dispositivo):
         return paths
     
     def get_files_per_year(self, path: str, year_from: int | None) -> dict | None:
-        return {}
+        try:
+            command2 = f"find {path} -maxdepth 1 -type f -exec ls -l {{}} \\;"
+            args = ["shell", command2]
+            result = self.__execute_adb_command(args=args, timeout=60)
+            
+            if result is None or result.stdout is None: return
+
+            files = list()
+            for line in result.stdout.splitlines():
+                date, _, filename = line.split(maxsplit=8)[5:8]
+                files.append((date, filename))
+
+            files_per_year = dict()
+            for date, filename in files:
+                year = date.split('-')[0]
+                if year_from is not None and int(year) < year_from: continue
+                if not year in files_per_year:
+                    files_per_year[year] = []
+                files_per_year[year].append(filename)
+
+            files_per_year = dict(sorted(files_per_year.items(), reverse=True))
+
+            return files_per_year
+        except Exception as e:
+            logger.error(f'An error has occurred on log_files_in_folder: ', e)
+            return {}
 
     def copy_if_not_exists(file_info: tuple[str, str], dest_folder: str) -> str:
         return {}
@@ -166,149 +300,3 @@ class Config:
             return celular
 
 config = Config()
-
-class ADBInterface:
-    def __init__(self, celular: Celular):
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        self.__adb_path = os.path.join(script_dir, "android/platform-tools/adb.exe")  # Windows
-        self.celular = celular
-
-    def __execute_adb_command(self, 
-                              args: list, 
-                              capture_output: bool = True, 
-                              text: bool = True, 
-                              timeout: int = 5,
-                              log_stdout: bool = False) -> CompletedProcess[str] | None:
-        if (len(args) == 0):
-            logger.error('\nError: there are no arguments to execute adb.exe with')
-            return None
-        
-        logger.info(f'\nExecuting ./adb {' '.join(args)}')
-        
-        args.insert(0, self.__adb_path)
-        try:
-            result: CompletedProcess[str] = run(args=args, capture_output=capture_output, text=text, timeout=timeout)
-        except TimeoutExpired:
-            logger.error(f"\nCommand timed out after {timeout} seconds\n")
-            return None
-
-        if text:
-            if log_stdout:
-                logger.info("\nSTDOUT:\n")
-                logger.info(result.stdout)
-
-            if len(result.stderr) > 0: 
-                logger.error("STDERR (if any):")
-                logger.error(result.stderr)
-                logger.error('\n\n')
-            
-        return result
-
-    def __check_android_connected(self) -> bool:
-        result = self.__execute_adb_command(['devices'])
-        lines = result.stdout.splitlines()
-        if len(lines) != 3: 
-            print(f'Error. Invalid number of lines: {len(lines)}')
-            return False
-
-        ip_line = lines[1].split()
-        if len(ip_line) != 2: 
-            print(f'Error. Invalid number of lines for ip line: {len(ip_line)}')
-            return False
-        
-        if ip_line[1].lower() != 'device': 
-            print(f'Error. The attached element is not a device: {ip_line[1]}')
-            return False
-        
-        return True
-    
-    def parear_con_dispositivo(self) -> None:
-        android_address = input('Ingrese ip:puerto del dispositivo:')
-        if not android_address: return
-        self.__execute_adb_command(['pair', android_address], capture_output=False, text=False, timeout=30)
-
-    def __inner_connect(self, address: str) -> bool:
-        retries = 0
-        connected = False
-        while not connected and retries < 3:
-            retries += 1
-            result = self.__execute_adb_command(['connect', address], timeout=10)
-            connected = result is not None and result.stdout is not None and 'connected to' in result.stdout
-        
-        return connected
-
-    def connected(self) -> bool:
-        return self.__check_android_connected()
-
-    def connect(self) -> bool:
-        connected = self.__check_android_connected()
-        if connected: return True
-
-        connected = self.__inner_connect(f'{self.celular.ip}:{self.celular.port}')
-        if connected: return True
-
-        texto = input(
-              f'La conexión falló para {self.celular.ip}:{self.celular.port}\n'
-              ' - Ingresar ip. Tipear 1 <ip>\n'
-              ' - Ingresar puerto. Tipear 2 <port> \n'
-              ' - Ingresar ip:puerto. Tipear 3 <ip:port>\n' 
-              'Opción: '
-            )
-
-        opcion = texto[0]
-        updates = {}
-        if opcion == '1':
-            updates['ip'] = texto.split(' ')[1]
-            alt_address = f'{updates['ip']}:{self.celular.port}'
-        elif opcion == '2':
-            updates['port'] = texto.split(' ')[1]
-            alt_address = f'{self.celular.ip}:{updates['port']}'
-        elif opcion == '3':
-            updates['ip'], updates['port'] = texto.split(' ')[1].split(':')
-            alt_address = f'{updates['ip']}:{updates['port']}'
-        else:
-            return False
-
-        connected = self.__inner_connect(alt_address)
-        
-        if connected: 
-            config.actualizar_celular_propiedad(self.celular, updates)
-            return True
-        else: 
-            console.print_error('La conexión falló para el <ip:puerto> ingresado')
-            return False
-
-    def disconnect(self) -> CompletedProcess[str]:
-        return self.__execute_adb_command(['disconnect'])
-
-    def log_files_in_folder(self, path: str) -> dict | None:
-        try:
-            command2 = f"find {path} -maxdepth 1 -type f -exec ls -l {{}} \\;"
-            args = ["shell", command2]
-            result = self.__execute_adb_command(args=args, timeout=60)
-            
-            if result is None or result.stdout is None: return
-
-            files = list()
-            for line in result.stdout.splitlines():
-                date, _, filename = line.split(maxsplit=8)[5:8]
-                files.append((date, filename))
-
-            files_per_year = dict()
-            for date, filename in files:
-                year = date.split('-')[0]
-                if not year in files_per_year:
-                    files_per_year[year] = []
-                files_per_year[year].append(filename)
-            
-            files_per_year = dict(sorted(files_per_year.items(), reverse=True))
-
-            return files_per_year
-        except Exception as e:
-            logger.error(f'An error has occurred on log_files_in_folder: ', e)
-            return {}
-
-
-      
-   
-            

@@ -1,5 +1,5 @@
 from io import TextIOWrapper
-from clases import ADBInterface, Config, Celular
+from clases import Config, Celular
 import console
 import logging
 logger = logging.getLogger(__name__)
@@ -51,8 +51,7 @@ def main():
 
     logger.info('\n\n--- EXECUTION --------------------------------------------------------------')
     opciones_validas = ['1', '2', '3', 'q']
-    adb = ADBInterface(celular=celular)
-    connected = adb.connected()
+    connected = celular.connected()
 
     if connected: console.print_info('Status: connected')
     else: console.print_error('Status: disconnected')
@@ -61,10 +60,12 @@ def main():
     while opcion in opciones_validas:
         opcion = get_menu_option(opciones_validas=opciones_validas)
         if opcion == '1':
-            adb.connect()
+            _, updates = celular.connect()
+            if updates:
+                config.actualizar_celular_propiedad(celular, props_values=updates)
             print('Opción ejecutada exitosamente')
         elif opcion == '2':
-            files_per_year = adb.log_files_in_folder(path=celular.paths[0])
+            files_per_year = celular.get_files_per_year(path=celular.paths[0], year_from=None)
             for year in files_per_year:
                 logger.info(f'------ YEAR {year} -----------------')
                 files = files_per_year[year]
@@ -73,10 +74,10 @@ def main():
 
             print('Opción ejecutada exitosamente')
         elif opcion == '3':
-            adb.parear_con_dispositivo()
+            celular.parear_con_dispositivo()
             print('Opción ejecutada exitosamente')
         elif opcion == 'q':
-            adb.disconnect()
+            celular.disconnect()
             opcion = ''
             
     logger.info('\n----------------------------------------------------------------------------')
