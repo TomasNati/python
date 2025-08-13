@@ -158,16 +158,13 @@ class Celular(Dispositivo):
         
         return connected
     
-    def _get_date_and_filename(self, line:str) -> tuple[str, str]:
-        # Pattern: permissions user group size date time filepath
-        pattern = r'^(\S+)\s+\d+\s+\S+\s+\S+\s+\d+\s+(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})\s+(.+)$'
-        match = re.match(pattern, line)
+    def _get_date_and_filename(self, line:str, dir_path: str) -> tuple[str, str]:
+        parts = line.split(dir_path)
+        attributes, filename = parts
+        fullpath = f'{dir_path}{filename}'
+        date = attributes.split()[-2]
 
-        if match:
-            date = match.group(2)         # 2025-07-05
-            filepath = match.group(4)     # full path with spaces
-
-        return date, filepath
+        return date, fullpath
 
     def connected(self) -> bool:
         return self.__check_android_connected()
@@ -231,7 +228,7 @@ class Celular(Dispositivo):
 
             files = list()
             for line in result.stdout.splitlines():
-                date, filepath = self._get_date_and_filename(line)
+                date, filepath = self._get_date_and_filename(line, path)
                 files.append((date, filepath))
 
             files_per_year = dict()
