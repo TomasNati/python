@@ -101,27 +101,24 @@ class Celular(Dispositivo):
                               timeout: int = 5,
                               log_stdout: bool = False) -> CompletedProcess[str] | None:
         if (len(args) == 0):
-            logger.error('\nError: there are no arguments to execute adb.exe with')
+            logger.error('Error: there are no arguments to execute adb.exe with')
             return None
         
-        logger.info(f'\nExecuting ./adb {' '.join(args)}')
+        logger.info(f'Executing ./adb {' '.join(args)}')
         
         args.insert(0, self.__adb_path)
         try:
             result: CompletedProcess[str] = run(args=args, capture_output=capture_output, text=text, timeout=timeout)
         except TimeoutExpired:
-            logger.error(f"\nCommand timed out after {timeout} seconds\n")
+            logger.error(f"Command timed out after {timeout} seconds")
             return None
 
         if text:
-            if log_stdout:
-                logger.info("\nSTDOUT:\n")
+            if log_stdout and len(result.stdout)> 0:
                 logger.info(result.stdout)
 
             if len(result.stderr) > 0: 
-                logger.error("STDERR (if any):")
                 logger.error(result.stderr)
-                logger.error('\n\n')
             
         return result
 
@@ -255,10 +252,12 @@ class Celular(Dispositivo):
         dest_file = os.path.join(dest_folder, filename)
 
         if not os.path.exists(dest_file):
-             # adb pull filepath {dest_folder}/{filename}
-            return f"Copied: {filename}"
+            args = ["pull", filepath, f'{dest_folder}/{filename}']
+            self.__execute_adb_command(args=args, log_stdout=True)
+            return 'Copied'
         else:
-            return f"Skipped (already exists): {filename}"
+            logger.info(f"Skipped (already exists): {filename}")
+            return 'Skipped'
 
 class Config:
     def __init__(self):
