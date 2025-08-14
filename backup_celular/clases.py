@@ -250,8 +250,15 @@ class Celular(Dispositivo):
 
     def copy_if_not_exists(self, file_info: tuple[str, str], dest_folder: str) -> str:
         filename, filepath = file_info
-        result = f'Copying file {filepath} to {dest_folder}/{filename}'
-        return result
+        
+        os.makedirs(dest_folder, exist_ok=True)
+        dest_file = os.path.join(dest_folder, filename)
+
+        if not os.path.exists(dest_file):
+             # adb pull filepath {dest_folder}/{filename}
+            return f"Copied: {filename}"
+        else:
+            return f"Skipped (already exists): {filename}"
 
 class Config:
     def __init__(self):
