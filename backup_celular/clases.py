@@ -219,7 +219,7 @@ class Celular(Dispositivo):
         try:
             command2 = f"find '{path}' -maxdepth 1 -type f -exec ls -l {{}} \\;"
             args = ["shell", command2]
-            result = self.__execute_adb_command(args=args, timeout=60)
+            result = self.__execute_adb_command(args=args, timeout=240)
             
             if result is None or result.stdout is None: return
 

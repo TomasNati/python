@@ -51,3 +51,23 @@ List of devices attached
 192.168.1.xy:<puerto>      device
 ```
 
+** Paths a los directorios en Android ** 
+* Almacenamiento interno:
+    
+    . Usar `sdcard/` como raíz. Por ejemplo: `sdcard/DCIM/Camera`
+
+* Tarjeta de memoria: seguir estos pasos.
+
+    1. Conectarse al dispositivo usando `./adb connect <ip:puerto>`
+    2. Ejecutar `adb shell "ls /storage"`
+    3. Eso retorna un output parecido a este:
+
+       ```
+       emulated
+       self
+       XXXX-YYYY
+       ```
+       . `emulated` -> Internal Storage.
+       . `XXXX-YYYY` -> External SD card.
+
+       Then, a typical path for the SD card would be `/storage/XXXX-YYYY/DCIM/Camera`

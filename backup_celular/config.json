@@ -3,7 +3,7 @@
         {
             "name": "Andres",
             "ip": "192.168.1.56",
-            "port": "39755",
+            "port": "39403",
             "paths": [
                 "sdcard/DCIM/Camera",
                 "sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images",
@@ -13,12 +13,10 @@
         },
         {
             "name": "Natalia",
-            "ip": "192.168.1.56",
-            "port": 12345,
+            "ip": "192.168.1.53",
+            "port": "42733",
             "paths": [
-                "sdcard/DCIM/Camera",
-                "sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images",
-                "sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Video"
+                "storage/0403-0201/DCIM/Camera"
             ],
             "destination": "C:/Users/Andres/Backups/celular/Natalia"
         }
