@@ -252,7 +252,7 @@ class Celular(Dispositivo):
         dest_file = os.path.join(dest_folder, filename)
 
         if not os.path.exists(dest_file):
-            args = ["pull", filepath, f'{dest_folder}/{filename}']
+            args = ["-s", self.address(), "pull", filepath, f'{dest_folder}/{filename}']
             self.__execute_adb_command(args=args, log_stdout=True)
             return 'Copied'
         else:
