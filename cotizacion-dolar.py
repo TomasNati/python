@@ -102,6 +102,6 @@ def main():
         
     except Exception:
         logging.error("Something went wrong:\n%s", traceback.format_exc())
-
+        input('Press any key to continue.')
 
 main()

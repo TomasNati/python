@@ -39,5 +39,7 @@ try:
         elif environment == 'u': environment = 'uat'
 
         print(f'\n/deploy name={solution} tag={tag} env={environment}')
+
+    input('Press any key to continue...')
 except Exception as e:
     print('Error: ', e)
