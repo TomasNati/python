@@ -2,3 +2,6 @@ build/*
 backup_celular/__pycache__/*
 log*.txt
 solutions.json
+build_commands/build/*
+*.log
+backup.log

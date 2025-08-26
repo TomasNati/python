@@ -1,8 +1,22 @@
 import json
 import os
+import sys
 
-script_dir = os.path.dirname(os.path.abspath(__file__))
-config_path = os.path.join(script_dir, "solutions.json")
+# build command: pyinstaller --onefile --add-data "solutions.json;." build.py
+
+def get_resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller"""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        # Running as script, use script directory
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    
+    return os.path.join(base_path, relative_path)
+
+# Use the helper function to get the config path
+config_path = get_resource_path("solutions.json")
 
 with open(config_path, 'r') as f:
     solutions = json.load(f)
@@ -17,7 +31,14 @@ solution = input('Type <solution number> [b|d] <tag> [d|i|u]\n' \
 'For example: 1 b my-tag d\n' \
 '> ')
 try:
-    sol_index, action, tag, environment = solution.split()
+    items = solution.split()
+    if len(items) < 3 or len(items) > 4:
+        print('Invalid input format')
+        quit()
+
+    sol_index, action, tag = items[:3]
+    environment = items[3] if len(items) == 4 else None
+    
     sol_index = int(sol_index)
     if sol_index < 0 or sol_index > len(solutions_sorted):
         print('Invalid solution selected')
@@ -25,7 +46,7 @@ try:
     if action not in ['b', 'd']:
         print('Invalid action')
         quit()
-    if environment not in ['d', 'i', 'u']:
+    if action == 'd' and environment not in ['d', 'i', 'u']:
         print('Invalid environment')
         quit()
 
@@ -43,3 +64,4 @@ try:
     input('Press any key to continue...')
 except Exception as e:
     print('Error: ', e)
+    input('Press any key to continue...')
