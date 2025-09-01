@@ -16,6 +16,7 @@ def backup_files(device: Dispositivo, source_path:str, dest_folder: str,year_fro
     for year in files_per_year:
         copied = 0
         skipped = 0
+        timeout = 0
         files = files_per_year[year]
         logger.info(f'--- YEAR {year} -------------------------------------------------------')
         
@@ -23,6 +24,7 @@ def backup_files(device: Dispositivo, source_path:str, dest_folder: str,year_fro
             log_res = device.copy_if_not_exists(file_info=file_info,dest_folder=f'{dest_folder}/{year}')
             
             if log_res.lower().find('skipped') > -1: skipped += 1
+            elif log_res.lower().find('timeout') > -1: timeout += 1
             else: copied +=1 
 
             try:
@@ -32,7 +34,7 @@ def backup_files(device: Dispositivo, source_path:str, dest_folder: str,year_fro
 
         logger.info(f'-----------------------------------------------------------------------')
 
-        logger.info(f'Year {year} - Copied: {copied} files - Skipped: {skipped} files')  
+        logger.info(f'Year {year} - Copied: {copied} files - Skipped: {skipped} files - Timeout: {timeout} files')  
 
 def get_menu_option(opciones_validas: list[str]) -> str:
     try:

@@ -99,10 +99,10 @@ class Celular(Dispositivo):
                               capture_output: bool = True, 
                               text: bool = True, 
                               timeout: int = 5,
-                              log_stdout: bool = False) -> CompletedProcess[str] | None:
+                              log_stdout: bool = False) -> CompletedProcess[str] | str:
         if (len(args) == 0):
             logger.error('Error: there are no arguments to execute adb.exe with')
-            return None
+            return 'No arguments'
         
         logger.info(f'Executing ./adb {' '.join(args)}')
         
@@ -111,7 +111,7 @@ class Celular(Dispositivo):
             result: CompletedProcess[str] = run(args=args, capture_output=capture_output, text=text, timeout=timeout)
         except TimeoutExpired:
             logger.error(f"Command timed out after {timeout} seconds")
-            return None
+            return 'Timeout'
 
         if text:
             if log_stdout and len(result.stdout)> 0:
@@ -253,8 +253,8 @@ class Celular(Dispositivo):
 
         if not os.path.exists(dest_file):
             args = ["-s", self.address(), "pull", filepath, f'{dest_folder}/{filename}']
-            self.__execute_adb_command(args=args, log_stdout=True)
-            return 'Copied'
+            result = self.__execute_adb_command(args=args, log_stdout=True)
+            return 'Timeout' if result == 'Timeout'  else 'Copied'
         else:
             logger.info(f"Skipped (already exists): {filename}")
             return 'Skipped'
