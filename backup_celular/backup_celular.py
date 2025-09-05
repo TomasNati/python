@@ -8,13 +8,14 @@ def safe_to_int(s: str) -> int | None:
     return int(s) if s.isdigit() else None
 
 def backup_files(device: Dispositivo, source_path:str, dest_folder: str,year_from: int | None) -> None:
+    print(f'\nGetting files from {source_path}{f' - Year: {year_from}' if year_from is not None else ''}')
     files_per_year = device.get_files_per_year(source_path, year_from)
 
     if files_per_year == None: return
 
-    line = f'Writing files in folder: {source_path} to base destination: {dest_folder}'
+    line = f'Writing files to base destination: {dest_folder}'
     logger.info(line)
-    print(f'\nline')
+    print(f'{line}')
 
     for year in files_per_year:
         copied = 0
@@ -23,7 +24,7 @@ def backup_files(device: Dispositivo, source_path:str, dest_folder: str,year_fro
         files = files_per_year[year]
         line = f'--- YEAR {year} -------------------------------------------------------'
         logger.info(line)
-        print(line)
+        print(f'\n{line}')
         
         for file_info in files:
             log_res = device.copy_if_not_exists(file_info=file_info,dest_folder=f'{dest_folder}/{year}')
@@ -32,7 +33,7 @@ def backup_files(device: Dispositivo, source_path:str, dest_folder: str,year_fro
             elif log_res.lower().find('timeout') > -1: timeout += 1
             else: copied +=1 
 
-            line = f'Year {year} - Copied: {copied} files - Skipped: {skipped} files - Timeout: {timeout} files'
+            line = f'Copied: {copied} files - Skipped: {skipped} files - Timeout: {timeout} files'
             print(f'\r{line}', end='', flush=True)
 
             try:
@@ -41,11 +42,8 @@ def backup_files(device: Dispositivo, source_path:str, dest_folder: str,year_fro
                 logger.error(f'An error ocurred when printing line: {log_res}', e)
 
         print()
-        line = '-----------------------------------------------------------------------'
-        logger.info(line)
-        print(line)
 
-        line = f'Year {year} - Copied: {copied} files - Skipped: {skipped} files - Timeout: {timeout} files'
+        line = f'Copied: {copied} files - Skipped: {skipped} files - Timeout: {timeout} files'
         logger.info(line)
 
 def get_menu_option(opciones_validas: list[str]) -> str:
