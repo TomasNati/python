@@ -1,50 +1,83 @@
 from clases import Celular, Dispositivo, config
 import logging
 import console
+import asyncio
+import itertools
 
 logger = logging.getLogger(__name__)
 
 def safe_to_int(s: str) -> int | None:
     return int(s) if s.isdigit() else None
 
-def backup_files(device: Dispositivo, source_path:str, dest_folder: str,year_from: int | None) -> None:
+async def spinner(msg_func):
+    max_length = 80
+    try:
+        for char in itertools.cycle('|/-\\'):
+            msg = msg_func()
+            max_length = max(len(msg), max_length)
+            print(f'\r{msg} {char}', end='', flush=True)
+            await asyncio.sleep(0.1)
+    except asyncio.CancelledError:
+        # Clear the line on cancel
+        print('\r' + ' ' * (max_length + 2) + '\r', end='', flush=True)
+        raise
+
+
+async def get_files_per_year_from_device(device: Dispositivo, source_path:str, year_from: int | None) ->dict | None:
+    files = await asyncio.to_thread(device.get_files_per_year, source_path, year_from)
+    return files
+
+async def copy_files_for_year(device: Dispositivo, files:list, dest_folder: str, year: int, progress: dict) -> None:
+  
+   for file_info in files:
+        log_res = await asyncio.to_thread(device.copy_if_not_exists, file_info=file_info,dest_folder=f'{dest_folder}/{year}')
+        
+        if log_res.lower().find('skipped') > -1: progress['skipped'] += 1
+        elif log_res.lower().find('timeout') > -1: progress['timeout'] += 1
+        else: progress['copied'] +=1 
+
+        try:
+            if device.name == config.kindle.name: logger.info(f'\n{log_res}')
+        except Exception as e:
+            logger.error(f'An error ocurred when printing line: {log_res}', e)
+       
+
+async def backup_files(device: Dispositivo, source_path:str, dest_folder: str,year_from: int | None) -> None:
     print(f'\nGetting files from {source_path}{f' - Year: {year_from}' if year_from is not None else ''}')
-    files_per_year = device.get_files_per_year(source_path, year_from)
+    spin_read = asyncio.create_task(spinner(lambda: f'📂 Processing... '))
+    files_per_year = await get_files_per_year_from_device(device=device, source_path=source_path, year_from=year_from)
+    spin_read.cancel()
+    await asyncio.sleep(0.1)
 
     if files_per_year == None: return
 
     line = f'Writing files to base destination: {dest_folder}'
     logger.info(line)
-    print(f'{line}')
+    print(f'\n{line}')
 
     for year in files_per_year:
-        copied = 0
-        skipped = 0
-        timeout = 0
         files = files_per_year[year]
         line = f'--- YEAR {year} -------------------------------------------------------'
         logger.info(line)
         print(f'\n{line}')
-        
-        for file_info in files:
-            log_res = device.copy_if_not_exists(file_info=file_info,dest_folder=f'{dest_folder}/{year}')
-            
-            if log_res.lower().find('skipped') > -1: skipped += 1
-            elif log_res.lower().find('timeout') > -1: timeout += 1
-            else: copied +=1 
 
-            line = f'Copied: {copied} files - Skipped: {skipped} files - Timeout: {timeout} files'
-            print(f'\r{line}', end='', flush=True)
+        progress = {
+            'total': len(files),
+            'copied': 0,
+            'skipped': 0,
+            'timeout': 0
+        }
 
-            try:
-                if device.name == config.kindle.name: logger.info(f'\n{log_res}')
-            except Exception as e:
-                logger.error(f'An error ocurred when printing line: {log_res}', e)
+        spin_copy = asyncio.create_task(spinner(lambda: f"📤 Copied: {progress['copied']} files - Skipped: {progress['skipped']} files - Timeout: {progress['timeout']} files"))
+        await copy_files_for_year(device=device, files=files, dest_folder=dest_folder, year=year, progress=progress)
+        spin_copy.cancel()
+        await asyncio.sleep(0.1)
 
-        print()
-
-        line = f'Copied: {copied} files - Skipped: {skipped} files - Timeout: {timeout} files'
+        line =  f"Copied: {progress['copied']} files - Skipped: {progress['skipped']} files - Timeout: {progress['timeout']} files"
         logger.info(line)
+        print(line)
+
+    print("✅ Backup completed")
 
 def get_menu_option(opciones_validas: list[str]) -> str:
     try:
@@ -112,7 +145,7 @@ def main():
 
                     log_index = 1
                     for source_path in device.get_paths():
-                        backup_files(device, source_path, device.destination, year_from)
+                        asyncio.run(backup_files(device, source_path, device.destination, year_from))
                         log_index +=1
 
                 elif opcion == '3':
@@ -129,7 +162,7 @@ def main():
 
             log_index = 1
             for source_path in device.get_paths():
-                backup_files(device, source_path, device.destination, year_from)
+                asyncio.run(backup_files(device, source_path, device.destination, year_from))
                 log_index +=1
         else:
             print('Invalid device')
