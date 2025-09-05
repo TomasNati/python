@@ -12,13 +12,18 @@ def backup_files(device: Dispositivo, source_path:str, dest_folder: str,year_fro
 
     if files_per_year == None: return
 
-    logger.info(f'Writing files in folder: {source_path} to base destination: {dest_folder}')
+    line = f'Writing files in folder: {source_path} to base destination: {dest_folder}'
+    logger.info(line)
+    print(f'\nline')
+
     for year in files_per_year:
         copied = 0
         skipped = 0
         timeout = 0
         files = files_per_year[year]
-        logger.info(f'--- YEAR {year} -------------------------------------------------------')
+        line = f'--- YEAR {year} -------------------------------------------------------'
+        logger.info(line)
+        print(line)
         
         for file_info in files:
             log_res = device.copy_if_not_exists(file_info=file_info,dest_folder=f'{dest_folder}/{year}')
@@ -27,14 +32,21 @@ def backup_files(device: Dispositivo, source_path:str, dest_folder: str,year_fro
             elif log_res.lower().find('timeout') > -1: timeout += 1
             else: copied +=1 
 
+            line = f'Year {year} - Copied: {copied} files - Skipped: {skipped} files - Timeout: {timeout} files'
+            print(f'\r{line}', end='', flush=True)
+
             try:
                 if device.name == config.kindle.name: logger.info(f'\n{log_res}')
             except Exception as e:
                 logger.error(f'An error ocurred when printing line: {log_res}', e)
 
-        logger.info(f'-----------------------------------------------------------------------')
+        print()
+        line = '-----------------------------------------------------------------------'
+        logger.info(line)
+        print(line)
 
-        logger.info(f'Year {year} - Copied: {copied} files - Skipped: {skipped} files - Timeout: {timeout} files')  
+        line = f'Year {year} - Copied: {copied} files - Skipped: {skipped} files - Timeout: {timeout} files'
+        logger.info(line)
 
 def get_menu_option(opciones_validas: list[str]) -> str:
     try:
