@@ -99,10 +99,10 @@ class Celular(Dispositivo):
                               capture_output: bool = True, 
                               text: bool = True, 
                               timeout: int = 5,
-                              log_stdout: bool = False) -> CompletedProcess[str] | None:
+                              log_stdout: bool = False) -> CompletedProcess[str] | str:
         if (len(args) == 0):
             logger.error('Error: there are no arguments to execute adb.exe with')
-            return None
+            return 'No arguments'
         
         logger.info(f'Executing ./adb {' '.join(args)}')
         
@@ -111,7 +111,7 @@ class Celular(Dispositivo):
             result: CompletedProcess[str] = run(args=args, capture_output=capture_output, text=text, timeout=timeout)
         except TimeoutExpired:
             logger.error(f"Command timed out after {timeout} seconds")
-            return None
+            return 'Timeout'
 
         if text:
             if log_stdout and len(result.stdout)> 0:
@@ -124,6 +124,8 @@ class Celular(Dispositivo):
 
     def __check_android_connected(self) -> bool:
         result = self.__execute_adb_command(['devices'], log_stdout=True)
+        if not isinstance(result, CompletedProcess): return False
+
         lines = result.stdout.splitlines()
         if len(lines) != 3: 
             print(f'Error. Invalid number of lines: {len(lines)}')
@@ -215,13 +217,21 @@ class Celular(Dispositivo):
             
         return paths
     
+    def is_video_file(self, filename: str) -> str:
+        video_extensions = ['mp4']
+        for extension in video_extensions:
+            if filename is not None and filename.lower().endswith(extension):
+                return True
+
+        return False    
+
     def get_files_per_year(self, path: str, year_from: int | None) -> dict | None:
         try:
             command2 = f"find '{path}' -maxdepth 1 -type f -exec ls -l {{}} \\;"
             args = ["shell", command2]
-            result = self.__execute_adb_command(args=args, timeout=240)
+            result = self.__execute_adb_command(args=args, timeout=480)
             
-            if result is None or result.stdout is None: return
+            if not isinstance(result, CompletedProcess) or result.stdout is None: return
 
             files = list()
             for line in result.stdout.splitlines():
@@ -247,16 +257,15 @@ class Celular(Dispositivo):
 
     def copy_if_not_exists(self, file_info: tuple[str, str], dest_folder: str) -> str:
         filename, filepath = file_info
-        
+        timeout = 30 if self.is_video_file(filename) else 10
         os.makedirs(dest_folder, exist_ok=True)
         dest_file = os.path.join(dest_folder, filename)
 
         if not os.path.exists(dest_file):
             args = ["-s", self.address(), "pull", filepath, f'{dest_folder}/{filename}']
-            self.__execute_adb_command(args=args, log_stdout=True)
-            return 'Copied'
+            result = self.__execute_adb_command(args=args, log_stdout=True, timeout=timeout)
+            return 'Timeout' if result == 'Timeout'  else 'Copied'
         else:
-            logger.info(f"Skipped (already exists): {filename}")
             return 'Skipped'
 
 class Config:
