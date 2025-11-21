@@ -63,6 +63,8 @@ def main():
                 print('Line with invalid format: ', line)
             fecha, compra, venta, libre = parts
 
+            venta = venta.replace('.', ',')
+
             if not '/' in fecha: continue
 
             if (not fecha_desde_encontrada):
