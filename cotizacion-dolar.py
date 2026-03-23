@@ -1,26 +1,40 @@
 from __future__ import annotations
-import urllib.request, urllib.parse
+import urllib.request, urllib.parse, urllib.error
+import ssl
 import datetime
+import re
 import logging
 import traceback
 
 logging.basicConfig(level=logging.ERROR)
 
+ssl_context = ssl.create_default_context()
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_NONE
 
 cotizacion_url = 'https://www.bna.com.ar/Cotizador/DescargarPorFecha?RadioButton=on&filtroEuroDescarga=0&filtroDolarDescarga=1&fechaDesde={desde}&fechaHasta={hasta}&id=billetes&descargar='
 
 class FechaCotizacion:
            
     def __init__(self, fecha_string: str, usar_dias_previos=False):
+        cantidad_de_dias_previos = 5
+        parts = fecha_string.split('/')
+        if len(parts) != 3:
+            raise Exception(f"\033[91mInvalid date format: '{fecha_string}'. Expected format: dd/mm/aaaa (e.g. 5/3/2026 or 05/03/2026)\033[0m")
+        day_str, month_str, year_str = parts
         try:
-            cantidad_de_dias_previos = 5
-            day,month,year = fecha_string.split('/')
-            self.fecha = datetime.date(int(year), int(month), int(day))
-            self.fecha_original = datetime.date(int(year), int(month), int(day))
-            if usar_dias_previos:
-                self.fecha = self.fecha - datetime.timedelta(days=cantidad_de_dias_previos)
-        except Exception as e:
-            raise("There was an error creating the date: ", e)
+            day = int(day_str)
+            month = int(month_str)
+            year = int(year_str)
+        except ValueError:
+            raise Exception(f"\033[91mInvalid date: '{fecha_string}'. Day, month and year must be numbers. Expected format: dd/mm/aaaa\033[0m")
+        try:
+            self.fecha = datetime.date(year, month, day)
+        except ValueError:
+            raise Exception(f"\033[91mInvalid date: '{fecha_string}'. Please enter a valid date in format dd/mm/aaaa\033[0m")
+        self.fecha_original = self.fecha
+        if usar_dias_previos:
+            self.fecha = self.fecha - datetime.timedelta(days=cantidad_de_dias_previos)
     
     def encoded(self):
         return urllib.parse.quote(self.fecha.strftime('%d/%m/%Y'), safe='')
@@ -53,7 +67,12 @@ def main():
             raise Exception("From date should be lesser than To date")
 
         url = cotizacion_url.format(desde=from_date.encoded(), hasta=to_date.encoded())
-        response = urllib.request.urlopen(url)
+        try:
+            response = urllib.request.urlopen(url, context=ssl_context)
+        except urllib.error.URLError as e:
+            raise Exception(f"\033[91mError connecting to BNA: {e.reason}\033[0m")
+        except urllib.error.HTTPError as e:
+            raise Exception(f"\033[91mHTTP error from BNA: {e.code} {e.reason}\033[0m")
         fechas_y_cotizaciones = list()
         fecha_desde_encontrada = False
 
